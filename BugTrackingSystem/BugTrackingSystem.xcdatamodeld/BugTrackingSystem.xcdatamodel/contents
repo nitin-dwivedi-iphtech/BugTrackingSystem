@@ -1,9 +1,97 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="1" systemVersion="11A491" minimumToolsVersion="Automatic" sourceLanguage="Swift" usedWithCloudKit="false" userDefinedModelVersionIdentifier="">
-    <entity name="Item" representedClassName="Item" syncable="YES" codeGenerationType="class">
-        <attribute name="timestamp" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="24902" systemVersion="25F84" minimumToolsVersion="Automatic" sourceLanguage="Swift" userDefinedModelVersionIdentifier="">
+    <entity name="Bug" representedClassName="Bug" syncable="YES" codeGenerationType="class">
+        <attribute name="actual_result" optional="YES" attributeType="String"/>
+        <attribute name="app_version" optional="YES" attributeType="String"/>
+        <attribute name="assigned_employee_id" optional="YES" attributeType="String"/>
+        <attribute name="bug_details" optional="YES" attributeType="String"/>
+        <attribute name="bug_id" optional="YES" attributeType="String"/>
+        <attribute name="close_date" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="desc" optional="YES" attributeType="String"/>
+        <attribute name="device_name" optional="YES" attributeType="String"/>
+        <attribute name="due_date" optional="YES" attributeType="String"/>
+        <attribute name="environment" optional="YES" attributeType="String"/>
+        <attribute name="expected_result" optional="YES" attributeType="String"/>
+        <attribute name="module_name" optional="YES" attributeType="String"/>
+        <attribute name="open_date" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="os_version" optional="YES" attributeType="String"/>
+        <attribute name="priority" optional="YES" attributeType="String"/>
+        <attribute name="project_id" optional="YES" attributeType="String"/>
+        <attribute name="reporter_employee_id" optional="YES" attributeType="String"/>
+        <attribute name="screenshot" optional="YES" attributeType="String"/>
+        <attribute name="severity" optional="YES" attributeType="String"/>
+        <attribute name="status" optional="YES" attributeType="String"/>
+        <attribute name="step_to_reproduce" optional="YES" attributeType="String"/>
+        <relationship name="bug_comment_relation" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Comment" inverseName="comment_bug_relation" inverseEntity="Comment"/>
+        <relationship name="bug_emaployee_relation" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Employee" inverseName="employee_bug_relation" inverseEntity="Employee"/>
+        <relationship name="bug_project_relation" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Project" inverseName="project_bug_relation" inverseEntity="Project"/>
+        <uniquenessConstraints>
+            <uniquenessConstraint>
+                <constraint value="bug_id"/>
+            </uniquenessConstraint>
+        </uniquenessConstraints>
     </entity>
-    <elements>
-        <element name="Item" positionX="-63" positionY="-18" width="128" height="44"/>
-    </elements>
+    <entity name="Comment" representedClassName="Comment" syncable="YES" codeGenerationType="class">
+        <attribute name="bug_id" optional="YES" attributeType="String"/>
+        <attribute name="comment_id" optional="YES" attributeType="String"/>
+        <attribute name="comment_text" optional="YES" attributeType="String"/>
+        <attribute name="employee_id" optional="YES" attributeType="String"/>
+        <attribute name="sub_comment_id" optional="YES" attributeType="String"/>
+        <attribute name="timestamp" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <relationship name="comment_bug_relation" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Bug" inverseName="bug_comment_relation" inverseEntity="Bug"/>
+        <relationship name="comment_employee_relation" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Employee" inverseName="employee_comment_relation" inverseEntity="Employee"/>
+        <uniquenessConstraints>
+            <uniquenessConstraint>
+                <constraint value="comment_id"/>
+            </uniquenessConstraint>
+        </uniquenessConstraints>
+    </entity>
+    <entity name="Employee" representedClassName="Employee" syncable="YES" codeGenerationType="class">
+        <attribute name="address" optional="YES" attributeType="String"/>
+        <attribute name="designation" optional="YES" attributeType="String"/>
+        <attribute name="email" optional="YES" attributeType="String"/>
+        <attribute name="employee_id" optional="YES" attributeType="String"/>
+        <attribute name="employee_name" optional="YES" attributeType="String"/>
+        <attribute name="favourite_bug_id" optional="YES" attributeType="String"/>
+        <attribute name="password" optional="YES" attributeType="String"/>
+        <attribute name="profile_photo" optional="YES" attributeType="String"/>
+        <attribute name="role" optional="YES" attributeType="String"/>
+        <attribute name="team_id" optional="YES" attributeType="String"/>
+        <relationship name="employee_bug_relation" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Bug" inverseName="bug_emaployee_relation" inverseEntity="Bug"/>
+        <relationship name="employee_comment_relation" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Comment" inverseName="comment_employee_relation" inverseEntity="Comment"/>
+        <relationship name="employee_team_relation" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Team" inverseName="team_employee_relation" inverseEntity="Team"/>
+        <uniquenessConstraints>
+            <uniquenessConstraint>
+                <constraint value="employee_id"/>
+            </uniquenessConstraint>
+        </uniquenessConstraints>
+    </entity>
+    <entity name="Project" representedClassName="Project" syncable="YES" codeGenerationType="class">
+        <attribute name="desc" optional="YES" attributeType="String"/>
+        <attribute name="end_date" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="project_id" optional="YES" attributeType="String"/>
+        <attribute name="project_name" optional="YES" attributeType="String"/>
+        <attribute name="project_status" optional="YES" attributeType="String"/>
+        <attribute name="start_date" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="team_id" optional="YES" attributeType="String"/>
+        <relationship name="project_bug_relation" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Bug" inverseName="bug_project_relation" inverseEntity="Bug"/>
+        <relationship name="project_team_relation" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Team" inverseName="team_project_relation" inverseEntity="Team"/>
+        <uniquenessConstraints>
+            <uniquenessConstraint>
+                <constraint value="project_id"/>
+            </uniquenessConstraint>
+        </uniquenessConstraints>
+    </entity>
+    <entity name="Team" representedClassName="Team" syncable="YES" codeGenerationType="class">
+        <attribute name="project_id" optional="YES" attributeType="String"/>
+        <attribute name="team_id" optional="YES" attributeType="String"/>
+        <attribute name="team_name" optional="YES" attributeType="String"/>
+        <relationship name="team_employee_relation" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Employee" inverseName="employee_team_relation" inverseEntity="Employee"/>
+        <relationship name="team_project_relation" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Project" inverseName="project_team_relation" inverseEntity="Project"/>
+        <uniquenessConstraints>
+            <uniquenessConstraint>
+                <constraint value="team_id"/>
+            </uniquenessConstraint>
+        </uniquenessConstraints>
+    </entity>
 </model>
