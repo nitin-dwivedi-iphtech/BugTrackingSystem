@@ -12,14 +12,44 @@ struct ContentView: View {
     @Environment(\.managedObjectContext) private var viewContext
     @State var sessionManager = SessionManager.shared
     var body: some View {
+        
         if !sessionManager.isLoggedIn{
             AuthView()
         } else {
-            Button(action: {
-                sessionManager.logOut() 
-            }){
-                Text("Log out")
+            SubView()
+        }
+    }
+}
+
+struct SubView:View {
+    @State private var projectViewModel = ProjectViewModel()
+    @State private var contentVewModel = ContentViewModel()
+    var body: some View {
+        if contentVewModel.isAdmin{
+            TabView{
+                NavigationStack {
+                    TeamView()
+                }
+            }.ignoresSafeArea()
+        } else {
+            TabView {
+                NavigationStack{
+                    DashboardView()
+                }
+                .tag(0)
+                .tabItem{
+                    Label("Dashboard",systemImage: "square.grid.2x2.fill")
+                }
+                
+                NavigationStack {
+                    ProjectView()
+                }.tag(1)
+                    .tabItem{
+                        Label("Project",systemImage: "hammer.fill")
+                    }
             }
+            .ignoresSafeArea()
+            .environment(projectViewModel)
         }
     }
 }

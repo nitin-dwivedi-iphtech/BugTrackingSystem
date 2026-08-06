@@ -9,6 +9,7 @@ enum RoleEnum: String, Identifiable, CaseIterable {
     case projectManager = "Project Manager"
     case developer = "Developer"
     case qaTester = "QA Tester"
+    case admin = "Admin"
     
     var id: String { rawValue }
 }

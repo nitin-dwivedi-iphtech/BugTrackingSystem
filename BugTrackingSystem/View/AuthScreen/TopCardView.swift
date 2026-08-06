@@ -10,6 +10,8 @@ import SwiftUI
 struct TopCardView: View {
     var title:String
     var detail:String
+    var adminTap: ()->Void
+    @State private var colorToggle: Bool = false
     var body: some View {
         ZStack{
             Image("auth_back_image")
@@ -19,15 +21,25 @@ struct TopCardView: View {
                 .clipped()
                 .opacity(0.75)
                 .overlay(alignment:.leading){
-                    VStack(alignment:.leading){
-                        Text(title)
-                            .font(.title)
-                            .bold()
-                            .foregroundStyle(.white)
-                        
-                        Text(detail)
-                            .font(.system(size: 15))
-                            .foregroundStyle(Color.white.opacity(0.75))
+                    HStack{
+                        VStack(alignment:.leading){
+                            Text(title)
+                                .font(.title)
+                                .bold()
+                                .foregroundStyle(.white)
+                            
+                            Text(detail)
+                                .font(.system(size: 15))
+                                .foregroundStyle(Color.white.opacity(0.75))
+                        }
+                        Spacer()
+                        Image(systemName: "shield.lefthalf.filled")
+                            .font(.largeTitle)
+                            .foregroundStyle(colorToggle ? .blue : .red)
+                            .onTapGesture {
+                                colorToggle.toggle()
+                                adminTap()
+                            }
                     }
                     .padding(.top,35)
                     .padding(.horizontal,30)
@@ -41,6 +53,8 @@ struct TopCardView: View {
     }
 }
 
-//#Preview{
-//    TopCardView()
-//}
+#Preview{
+    TopCardView(title: "sign Up", detail: "sign up bro", adminTap: {
+        
+    })
+}

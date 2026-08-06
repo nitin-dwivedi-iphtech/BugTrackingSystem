@@ -14,6 +14,7 @@ struct CustomTextFieldView: View {
     var keyboardType: UIKeyboardType = .default
     var textContentType: UITextContentType?
     var icon:String
+    var lineLimit:Int
     
     var body: some View {
         HStack{
@@ -24,9 +25,10 @@ struct CustomTextFieldView: View {
             if isSecure{
                 SecureField(placeholder, text: $text)
             } else {
-                TextField(placeholder, text: $text)
+                TextField(placeholder, text: $text, axis: lineLimit > 1 ? .vertical : .horizontal)
                     .keyboardType(keyboardType)
                     .textContentType(textContentType)
+                    .lineLimit(lineLimit)
             }
         }
         .padding()

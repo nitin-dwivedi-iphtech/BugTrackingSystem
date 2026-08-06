@@ -15,3 +15,17 @@ extension NSManagedObjectContext{
         }
     }
 }
+
+extension Employee {
+    static func createAdmin(context: NSManagedObjectContext){
+        let employee = Employee(context: context)
+        employee.email = "admin@gmail.com"
+        employee.password = "123456"
+        employee.role = RoleEnum.admin.rawValue
+        employee.address = "organization"
+        employee.employee_name = "admin"
+        employee.employee_id = UUID().uuidString
+        
+        context.saveData()
+    }
+}

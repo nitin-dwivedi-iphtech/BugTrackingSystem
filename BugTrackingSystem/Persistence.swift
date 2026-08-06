@@ -9,7 +9,7 @@ import CoreData
 
 struct PersistenceController {
     static let shared = PersistenceController()
-
+    
     @MainActor
     static let preview: PersistenceController = {
         let result = PersistenceController(inMemory: true)
@@ -24,9 +24,9 @@ struct PersistenceController {
         }
         return result
     }()
-
+    
     let container: NSPersistentContainer
-
+    
     init(inMemory: Bool = false) {
         container = NSPersistentContainer(name: "BugTrackingSystem")
         if inMemory {
@@ -36,7 +36,7 @@ struct PersistenceController {
             if let error = error as NSError? {
                 // Replace this implementation with code to handle the error appropriately.
                 // fatalError() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
-
+                
                 /*
                  Typical reasons for an error here include:
                  * The parent directory does not exist, cannot be created, or disallows writing.
@@ -49,5 +49,17 @@ struct PersistenceController {
             }
         })
         container.viewContext.automaticallyMergesChangesFromParent = true
+        
+        createNewAdmin(context: container.viewContext)
+    }
+    
+    private func createNewAdmin(context:NSManagedObjectContext) {
+        let request = Employee.fetchRequest()
+        request.predicate = NSPredicate(format: "role == %@",RoleEnum.admin.rawValue)
+        let data = (try? context.fetch(request)) ?? []
+        if data.isEmpty  {
+            Employee.createAdmin(context: context)
+        }
+        
     }
 }
