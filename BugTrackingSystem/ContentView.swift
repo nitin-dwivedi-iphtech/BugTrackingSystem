@@ -24,13 +24,19 @@ struct ContentView: View {
 struct SubView:View {
     @State private var projectViewModel = ProjectViewModel()
     @State private var contentVewModel = ContentViewModel()
+    @State private var teamViewModel = TeamViewModel()
     var body: some View {
         if contentVewModel.isAdmin{
             TabView{
                 NavigationStack {
                     TeamView()
-                }
-            }.ignoresSafeArea()
+                }.tag(0)
+                    .tabItem{
+                        Label("Team",systemImage: "person.3.fill")
+                    }
+            }
+            .environment(teamViewModel)
+            .ignoresSafeArea()
         } else {
             TabView {
                 NavigationStack{

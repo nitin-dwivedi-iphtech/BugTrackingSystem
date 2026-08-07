@@ -11,5 +11,5 @@ enum RoleEnum: String, Identifiable, CaseIterable {
     case qaTester = "QA Tester"
     case admin = "Admin"
     
-    var id: String { rawValue }
+    var id: String { self.rawValue }
 }

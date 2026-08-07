@@ -49,7 +49,7 @@ struct PersistenceController {
             }
         })
         container.viewContext.automaticallyMergesChangesFromParent = true
-        
+        print(container.persistentStoreDescriptions.first?.url)
         createNewAdmin(context: container.viewContext)
     }
     

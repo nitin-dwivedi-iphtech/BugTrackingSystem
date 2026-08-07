@@ -35,10 +35,21 @@ class SessionManager{
         }
     }
     
+    private func employeeExists(email: String) -> Bool {
+        guard let context = context else { return true }
+        let request = Employee.fetchRequest()
+        request.predicate = NSPredicate(format: "email == %@", email)
+        do {
+            return try context.fetch(request).first != nil
+        } catch {
+            print("Error checking employee: \(error)")
+            return false
+        }
+    }
+    
     func signUp(email:String, password:String, name:String, address:String, designation:String, role:String) -> String?{
         guard let context = context else { return nil}
-        let data = fetchEmployee(email: email, password: password, role: role)
-        if data != nil{
+        if employeeExists(email: email) {
             return "Employee already exists"
         }
        
@@ -47,6 +58,7 @@ class SessionManager{
         employee.email = email
         employee.password = password
         employee.employee_name = name
+        employee.designation = designation
         employee.role = role
         context.saveData()
         

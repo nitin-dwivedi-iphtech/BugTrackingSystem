@@ -10,41 +10,58 @@ import SwiftUI
 struct ProjectView:View {
     @Environment(ProjectViewModel.self) var projectViewModel
     @State private var query:String = ""
-    @State private var showProjectAddView:Bool = false
+
+    private var filteredProjects: [Project] {
+        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return projectViewModel.projects }
+        return projectViewModel.projects.filter {
+            ($0.project_name ?? "").localizedCaseInsensitiveContains(trimmed) ||
+            ($0.project_id ?? "").localizedCaseInsensitiveContains(trimmed)
+        }
+    }
+
     var body: some View{
-        ScrollView{
-            VStack{
-                Header
-                CustomSearchView(query: $query)
+        VStack(spacing: 0){
+            Header
+            CustomSearchView(query: $query)
+
+            if filteredProjects.isEmpty {
+                emptyState
+            } else {
                 List{
-                    //TODO: projects list to be shown
+                    ForEach(filteredProjects, id: \.project_id) { project in
+                        NavigationLink(destination: ProjectDetailView(project: project)){
+                            ProjectRow(project: project)
+                        }
+                        .listRowSeparator(.hidden)
+                        .listRowInsets(EdgeInsets(top: 6, leading: 12, bottom: 6, trailing: 12))
+                        .listRowBackground(Color.clear)
+                    }
                 }
-            }
-        }.sheet(isPresented:$showProjectAddView){
-            NavigationStack{
-                AddProjectView()
+                .listStyle(.plain)
+                .scrollContentBackground(.hidden)
+                .id(projectViewModel.refreshToken)
             }
         }
     }
-    
+
+    var emptyState: some View {
+        VStack(spacing: 12) {
+            Image(systemName: "folder.badge.plus")
+                .font(.system(size: 48))
+                .foregroundStyle(.secondary)
+            Text("No projects found")
+                .font(.title3.weight(.semibold))
+            
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
     var Header:some View{
         HStack{
             Text("Projects")
                 .font(.title)
                 .fontWeight(.medium)
-            if projectViewModel.isProjectManager{
-                Spacer()
-                Button(action:{
-                    showProjectAddView = true
-                }){
-                    Image(systemName: "plus")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(.white)
-                        .frame(width: 36, height: 36)
-                        .background(Color.appButtonGradient, in: Circle())
-                        .shadow(color: Color("appPrimary").opacity(0.35), radius: 6, y: 3)
-                }
-            }
         }.padding(.horizontal)
     }
 }

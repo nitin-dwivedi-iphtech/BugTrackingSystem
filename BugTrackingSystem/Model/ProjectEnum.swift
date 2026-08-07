@@ -11,5 +11,13 @@ enum ProjectStatus: String, CaseIterable, Identifiable {
     case completed = "Completed"
     case archived = "Archived"
     
-    var id:String { rawValue }
+    var id:String { self.rawValue }
+}
+
+enum ProjectOsTypes: String, CaseIterable, Identifiable {
+    case mobile = "Mobile"
+    case web = "Web"
+    case desktop = "Desktop"
+    
+    var id: String { self.rawValue }
 }

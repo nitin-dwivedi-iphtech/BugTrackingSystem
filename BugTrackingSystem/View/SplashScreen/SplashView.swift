@@ -30,17 +30,18 @@ struct FullSlashView:View {
     
     var body: some View {
         VStack(spacing: 20){
-            Image("splash")
+            Image(systemName: "ladybug")
                 .resizable()
                 .scaledToFit()
                 .frame(width: 160, height: 160)
+                .foregroundStyle(.white)
                 .clipShape(RoundedRectangle(cornerRadius: 36))
                 .shadow(color: .black.opacity(0.35), radius: 20, y: 10)
                 .scaleEffect(scale)
                 .opacity(opacity)
             
             VStack(spacing: 8){
-                Text("Debugger Dev")
+                Text("Life Debugger")
                     .font(.system(size: 34, weight: .bold, design: .rounded))
                     .foregroundStyle(.white)
                 

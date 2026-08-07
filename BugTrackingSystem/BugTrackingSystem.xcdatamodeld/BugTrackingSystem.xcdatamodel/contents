@@ -71,6 +71,7 @@
         <attribute name="end_date" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="project_id" optional="YES" attributeType="String"/>
         <attribute name="project_name" optional="YES" attributeType="String"/>
+        <attribute name="project_os" optional="YES" attributeType="String"/>
         <attribute name="project_status" optional="YES" attributeType="String"/>
         <attribute name="start_date" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="team_id" optional="YES" attributeType="String"/>
@@ -84,6 +85,7 @@
     </entity>
     <entity name="Team" representedClassName="Team" syncable="YES" codeGenerationType="class">
         <attribute name="project_id" optional="YES" attributeType="String"/>
+        <attribute name="project_name" optional="YES" attributeType="String"/>
         <attribute name="team_id" optional="YES" attributeType="String"/>
         <attribute name="team_name" optional="YES" attributeType="String"/>
         <relationship name="team_employee_relation" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Employee" inverseName="employee_team_relation" inverseEntity="Employee"/>
