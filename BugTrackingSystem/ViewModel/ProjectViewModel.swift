@@ -10,7 +10,7 @@ import CoreData
 
 @Observable
 class ProjectViewModel{
-    var role: String? { SessionManager.shared.employee?.role }
+    var isProjectManager:Bool { SessionManager.shared.isProjectManager }
     var projects:[Project] = []
     var refreshToken: Int = 0
     private var context:NSManagedObjectContext?
@@ -51,15 +51,6 @@ class ProjectViewModel{
             print("Failed to update project: \(error)")
             return false
         }
-    }
-    
-    
-    var isProjectManager:Bool{
-        guard let role else { return false }
-        if RoleEnum.projectManager.rawValue == role {
-            return true
-        }
-        return false
     }
     
     

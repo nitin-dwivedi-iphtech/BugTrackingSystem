@@ -8,13 +8,5 @@ import Observation
 
 @Observable
 class ContentViewModel {
-    var role: String? { SessionManager.shared.employee?.role }
-
-    var isAdmin:Bool {
-        guard let role else { return false }
-        if RoleEnum.admin.rawValue == role {
-            return true
-        }
-        return false
-    }
+    var isAdmin:Bool { SessionManager.shared.isAdmin }
 }

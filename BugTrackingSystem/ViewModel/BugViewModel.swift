@@ -1,0 +1,232 @@
+//
+//  BugViewModel.swift
+//  BugTrackingSystem
+//
+//  Created by iPHTech 40 on 10/08/26.
+//
+
+import SwiftUI
+import CoreData
+
+@Observable
+class BugViewModel {
+    var isQaTester:Bool { SessionManager.shared.isQaTester }
+    var isDev:Bool { SessionManager.shared.isDeveloper }
+    var isProjectManager:Bool { SessionManager.shared.isProjectManager }
+    var developers: [Employee] {
+        let all = (employee?.employee_team_relation?.team_employee_relation?.allObjects as? [Employee]) ?? []
+        return all.filter { $0.role == RoleEnum.developer.rawValue }
+    }
+    var allBugs:[Bug] = []
+    var employee:Employee? { SessionManager.shared.employee }
+    var idCounter = 0
+    
+    var context:NSManagedObjectContext?
+    init(context:NSManagedObjectContext = PersistenceController.shared.container.viewContext) {
+        self.context = context
+        fetchBugs()
+    }
+    
+    func fetchBugs() {
+        idCounter += 1
+        guard let project = employee?.employee_team_relation?.team_project_relation?.allObjects.first as? Project,
+              let projectID = project.project_id else {
+            allBugs = []
+            return
+        }
+
+        let bugRequest = Bug.fetchRequest()
+        bugRequest.predicate = NSPredicate(format: "project_id == %@", projectID)
+        bugRequest.sortDescriptors = [NSSortDescriptor(key: "open_date", ascending: false)]
+
+        do {
+            allBugs = try context?.fetch(bugRequest) ?? []
+        } catch {
+            print("Failed to fetch bugs: \(error)")
+            allBugs = []
+        }
+    }
+    
+    func createBug(bugTitle: String, moduleName: String, bugDescription: String, stepsToReproduce: String, expectedResult: String, actualResult: String, environment: String, priority: String, severity: String, status: String, deviceType: String, osVersion: String, appVersion: String, dueDate: Date, screenshot: Data? = nil, assignedTo: String? = nil) {
+        guard let context = self.context,
+              let project = employee?.employee_team_relation?.team_project_relation?.allObjects.first as? Project else { return }
+
+        let bug = Bug(context: context)
+        bug.bug_id = UUID().uuidString
+        bug.bug_details = bugTitle
+        bug.module_name = moduleName
+        bug.desc = bugDescription
+        bug.step_to_reproduce = stepsToReproduce
+        bug.expected_result = expectedResult
+        bug.actual_result = actualResult
+        bug.environment = environment
+        bug.priority = priority
+        bug.severity = severity
+        bug.status = status
+        bug.device_name = deviceType
+        bug.os_version = osVersion
+        bug.app_version = appVersion
+        bug.due_date = dueDate.formatted(date: .abbreviated, time: .omitted)
+        bug.open_date = Date()
+        bug.project_id = project.project_id
+        bug.bug_project_relation = project
+        bug.reporter_employee_id = employee?.employee_id
+        bug.assigned_employee_id = assignedTo
+        bug.bug_emaployee_relation = employee
+        bug.screenshot = screenshot?.base64EncodedString()
+
+        context.saveData()
+        fetchBugs()
+    }
+
+    func updateBug(bug: Bug, bugTitle: String, moduleName: String, bugDescription: String, stepsToReproduce: String, expectedResult: String, actualResult: String, environment: String, priority: String, severity: String, status: String, deviceType: String, osVersion: String, appVersion: String, dueDate: Date, screenshot: Data?, assignedTo: String?) {
+        guard let context = self.context else { return }
+
+        bug.bug_details = bugTitle
+        bug.module_name = moduleName
+        bug.desc = bugDescription
+        bug.step_to_reproduce = stepsToReproduce
+        bug.expected_result = expectedResult
+        bug.actual_result = actualResult
+        bug.environment = environment
+        bug.priority = priority
+        bug.severity = severity
+        bug.status = status
+        bug.device_name = deviceType
+        bug.os_version = osVersion
+        bug.app_version = appVersion
+        bug.due_date = dueDate.formatted(date: .abbreviated, time: .omitted)
+        bug.screenshot = screenshot?.base64EncodedString()
+        bug.assigned_employee_id = assignedTo
+
+        context.saveData()
+        fetchBugs()
+    }
+
+    func developerName(for bug: Bug) -> String {
+        guard let id = bug.assigned_employee_id else { return "Unassigned" }
+        if let developer = developers.first(where: { $0.employee_id == id }) {
+            return developer.employee_name ?? "Unassigned"
+        }
+        return "Unassigned"
+    }
+
+    func shortBugID(for bug: Bug) -> String {
+        guard let id = bug.bug_id, !id.isEmpty else { return "N/A" }
+        return String(id.prefix(8)).uppercased()
+    }
+
+    func assignBug(_ bug: Bug, to developerID: String?) {
+        guard let context = self.context else { return }
+        bug.assigned_employee_id = developerID
+        if developerID != nil,
+           BugStatus(rawValue: bug.status ?? BugStatus.open.rawValue) == .open {
+            bug.status = BugStatus.assigned.rawValue
+        }
+        context.saveData()
+        fetchBugs()
+    }
+
+    func allowedTransitions(from status: BugStatus) -> [BugStatus] {
+        switch status {
+        case .open:
+            return isProjectManager ? [.assigned] : []
+        case .assigned:
+            return isDev ? [.inProgress] : []
+        case .inProgress:
+            return isDev ? [.readyForTesting] : []
+        case .readyForTesting:
+            return isQaTester ? [.fixed, .reopened] : []
+        case .fixed:
+            return isQaTester ? [.closed, .reopened] : []
+        case .reopened:
+            return isDev ? [.inProgress] : []
+        case .closed:
+            return isProjectManager ? [.reopened] : []
+        }
+    }
+
+    func updateBugStatus(_ bug: Bug, to status: BugStatus) {
+        guard let context = self.context else { return }
+        bug.status = status.rawValue
+        if status == .closed {
+            bug.close_date = Date()
+        } else {
+            bug.close_date = nil
+        }
+        context.saveData()
+        fetchBugs()
+    }
+
+
+    func addComment(bug: Bug, text: String) {
+        guard let context = self.context,
+              !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+        let comment = Comment(context: context)
+        comment.comment_id = UUID().uuidString
+        comment.bug_id = bug.bug_id
+        comment.comment_text = text
+        comment.employee_id = employee?.employee_id
+        comment.timestamp = Date()
+        comment.comment_bug_relation = bug
+        comment.comment_employee_relation = employee
+        context.saveData()
+    }
+
+    func editComment(_ comment: Comment, text: String) {
+        guard let context = self.context,
+              !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+        comment.comment_text = text
+        comment.timestamp = Date()
+        context.saveData()
+    }
+
+    func deleteComment(_ comment: Comment) {
+        guard let context = self.context else { return }
+        context.delete(comment)
+        context.saveData()
+    }
+
+    func comments(for bug: Bug) -> [Comment] {
+        let all = (bug.bug_comment_relation?.allObjects as? [Comment]) ?? []
+        return all.sorted { ($0.timestamp ?? .distantPast) > ($1.timestamp ?? .distantPast) }
+    }
+
+    func canModifyComment(_ comment: Comment) -> Bool {
+        comment.employee_id == employee?.employee_id
+    }
+
+    func filteredBugs(for query: String) -> [Bug] {
+        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return allBugs }
+        return allBugs.filter {
+            ($0.bug_details ?? "").localizedCaseInsensitiveContains(trimmed) ||
+            ($0.bug_id ?? "").localizedCaseInsensitiveContains(trimmed) ||
+            ($0.module_name ?? "").localizedCaseInsensitiveContains(trimmed) ||
+            ($0.status ?? "").localizedCaseInsensitiveContains(trimmed)
+        }
+    }
+
+    func statusColor(_ status: String?) -> Color {
+        switch status {
+        case "Open": return .orange
+        case "Assigned": return .teal
+        case "In Progress": return .blue
+        case "Ready for Testing": return .indigo
+        case "Fixed": return .green
+        case "Reopened": return .purple
+        case "Closed": return .gray
+        default: return .secondary
+        }
+    }
+
+    func priorityColor(_ priority: String?) -> Color {
+        switch priority {
+        case "Critical": return .red
+        case "High": return .orange
+        case "Medium": return .blue
+        case "Low": return .green
+        default: return .secondary
+        }
+    }
+}

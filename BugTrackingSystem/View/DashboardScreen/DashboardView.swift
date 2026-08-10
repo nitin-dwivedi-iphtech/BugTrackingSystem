@@ -8,105 +8,94 @@
 import SwiftUI
 
 struct DashboardView: View {
+    @Environment(BugViewModel.self) var bugViewModel
+
     var body: some View {
-        ScrollView{
-            VStack(spacing:12){
-                Header
-                TotalBugCard
-                Grid {
-                    GridRow {
-                        StatCard(title: "Total Bugs", value: "10", icon: "ladybug", color: .red)
-                        StatCard(title: "Open", value: "4", icon: "smallcircle.circle", color: .blue)
-                    }
-                    GridRow {
-                        StatCard(title: "In Progress", value: "2", icon: "clock", color: .orange)
-                        StatCard(title: "Fixed", value: "3", icon: "checkmark.circle", color: .green)
-                    }
-                    GridRow {
-                        StatCard(title: "Critical", value: "1", icon: "exclamationmark.triangle", color: .purple)
-                        StatCard(title: "Blockers", value: "1", icon: "xmark.octagon", color: .red)
-                    }
-                }
-                Button(action:{SessionManager.shared.logOut()}){
-                    Text("Logout")
-                }
-                // TODO: recent bugs part 
-                Spacer()
+        ScrollView {
+            VStack(spacing: 20) {
+                headerBanner
+                overviewSection
+                statusSection
+                recentSection
             }
+            .padding()
         }
+        .id(bugViewModel.idCounter)
+            .navigationTitle("Dashboard")
+        .scrollIndicators(.hidden)
     }
-    
-    var Header:some View {
-        HStack {
-            VStack(alignment:.leading){
-                Text("Good Morning,")
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                    .foregroundColor(.primary)
-                Text("Priya nair")
-                    .font(.title)
-                    .bold()
+
+    // MARK: - Welcome Banner
+
+    private var headerBanner: some View {
+        HStack(spacing: 14) {
+            avatarView
+            VStack(alignment: .leading, spacing: 5) {
+                Text(greeting)
+                    .font(.caption)
+                    .foregroundStyle(.white.opacity(0.75))
+                Text(employeeName)
+                    .font(.title2.weight(.bold))
+                    .foregroundStyle(.white)
+                Text(roleLabel)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 3)
+                    .background(.white.opacity(0.2), in: Capsule())
             }
             Spacer()
-            Image(systemName: "person.fill")
-        }.padding()
-        
-    }
-    
-    var TotalBugCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Total Bugs")
-                .font(.title3)
-            
-            HStack(spacing: 12) {
-                Text("10")
-                    .font(.system(size:50))
-                    .bold()
-                
-                VStack(alignment: .leading) {
-                    HStack {
-                        ProgressBar(color: .red, width: 50)
-                        ProgressBar(color: .orange, width: 25)
-                        ProgressBar(color: .green, width: 10)
-                    }
-                    
-                    Text("3 critical . 2 in progress")
-                        .font(.caption)
-                }
+            Button {
+                SessionManager.shared.logOut()
+            } label: {
+                Image(systemName: "rectangle.portrait.and.arrow.right")
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(.white)
+                    .frame(width: 40, height: 40)
+                    .background(.white.opacity(0.2), in: Circle())
             }
         }
-        .padding(16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(.blue.opacity(0.4), in: RoundedRectangle(cornerRadius: 20))
-        .padding(.horizontal)
+        .padding(18)
+        .background(
+            LinearGradient(
+                colors: [Color("appPrimary"), Color("appPrimary").opacity(0.62)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            ),
+            in: RoundedRectangle(cornerRadius: 20)
+        )
     }
-    
-    @ViewBuilder
-    func StatCard(title:String, value:String, icon:String, color:Color) -> some View {
-        VStack(alignment:.leading,spacing: 12){
-            HStack{
-                Text(title)
-                Spacer()
-                Image(systemName: icon)
-            }
-            Text(value)
-                .font(.largeTitle)
-                .bold()
-                .foregroundStyle(Color(color))
+
+    private var avatarView: some View {
+        Text(String(employeeName.prefix(1)).uppercased())
+            .font(.title3.weight(.bold))
+            .foregroundStyle(Color("appPrimary"))
+            .frame(width: 52, height: 52)
+            .background(Circle().fill(.white))
+    }
+
+    // MARK: - Personal Data
+
+    private var greeting: String {
+        switch Calendar.current.component(.hour, from: Date()) {
+        case 5..<12: return "Good Morning"
+        case 12..<17: return "Good Afternoon"
+        default: return "Good Evening"
         }
-        .frame(width:150)
-        .padding()
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 15))
     }
-    
-    @ViewBuilder
-    func ProgressBar(color:UIColor, width:Int) -> some View{
-        Text("")
-            .frame(minWidth:CGFloat(width), minHeight: 10)
-            .background(Color(color).opacity(0.7), in:RoundedRectangle(cornerRadius: 10))
+
+    private var employeeName: String {
+        SessionManager.shared.employee?.employee_name ?? "User"
+    }
+
+    private var roleLabel: String {
+        SessionManager.shared.employee?.role ?? ""
     }
 }
 
 #Preview {
-    DashboardView()
+    NavigationStack {
+        DashboardView()
+            .environment(BugViewModel())
+    }
 }

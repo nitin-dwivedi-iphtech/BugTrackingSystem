@@ -20,6 +20,38 @@ class SessionManager{
         autoLogin()
     }
     
+    var isAdmin:Bool {
+        guard let role = employee?.role else { return false }
+        if RoleEnum.admin.rawValue == role {
+            return true
+        }
+        return false
+    }
+    
+    var isProjectManager:Bool{
+        guard let role = employee?.role else { return false }
+        if RoleEnum.projectManager.rawValue == role {
+            return true
+        }
+        return false
+    }
+    
+    var isDeveloper:Bool {
+        guard let role = employee?.role else { return false }
+        if RoleEnum.developer.rawValue == role {
+            return true
+        }
+        return false
+    }
+    
+    var isQaTester:Bool {
+        guard let role = employee?.role else { return false }
+        if RoleEnum.qaTester.rawValue == role {
+            return true
+        }
+        return false
+    }
+    
     private func fetchEmployee(email:String, password:String, role:String) -> Employee? {
         do{
             let request = Employee.fetchRequest()
