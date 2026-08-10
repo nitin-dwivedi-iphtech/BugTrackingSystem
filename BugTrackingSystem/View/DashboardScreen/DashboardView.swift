@@ -25,8 +25,6 @@ struct DashboardView: View {
         .scrollIndicators(.hidden)
     }
 
-    // MARK: - Welcome Banner
-
     private var headerBanner: some View {
         HStack(spacing: 14) {
             avatarView
@@ -73,8 +71,6 @@ struct DashboardView: View {
             .frame(width: 52, height: 52)
             .background(Circle().fill(.white))
     }
-
-    // MARK: - Personal Data
 
     private var greeting: String {
         switch Calendar.current.component(.hour, from: Date()) {

@@ -29,7 +29,6 @@ struct AddProjectView: View {
             
             InputFields
             
-            // TODO: Team members to add
             Spacer()
             
             saveButton

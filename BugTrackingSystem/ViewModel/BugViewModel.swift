@@ -171,6 +171,7 @@ class BugViewModel {
         comment.comment_bug_relation = bug
         comment.comment_employee_relation = employee
         context.saveData()
+        fetchBugs()
     }
 
     func editComment(_ comment: Comment, text: String) {
@@ -179,12 +180,14 @@ class BugViewModel {
         comment.comment_text = text
         comment.timestamp = Date()
         context.saveData()
+        fetchBugs()
     }
 
     func deleteComment(_ comment: Comment) {
         guard let context = self.context else { return }
         context.delete(comment)
         context.saveData()
+        fetchBugs()
     }
 
     func comments(for bug: Bug) -> [Comment] {

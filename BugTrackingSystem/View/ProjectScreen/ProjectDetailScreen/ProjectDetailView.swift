@@ -22,7 +22,6 @@ struct ProjectDetailView: View {
             VStack(spacing: 20) {
                 headerCard
                 infoCard
-                // TODO: modules & bugs sections
             }
             .padding()
         }

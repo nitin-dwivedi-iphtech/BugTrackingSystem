@@ -9,9 +9,7 @@ import SwiftUI
 import Charts
 
 extension DashboardView {
-
-    // MARK: - Overview
-
+    
     var overviewSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             sectionHeader("Bug Overview", icon: "chart.pie.fill")
@@ -92,8 +90,6 @@ extension DashboardView {
         return "\(s.open) open · \(s.inProgress) in progress · \(s.fixed) fixed · \(s.closed) closed"
     }
 
-    // MARK: - Status Chart
-
     var statusSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             sectionHeader("Status Distribution", icon: "chart.bar.fill")
@@ -139,8 +135,6 @@ extension DashboardView {
         }
     }
 
-    // MARK: - Recent Bugs
-
     var recentSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             sectionHeader("Recently Reported", icon: "clock.arrow.circlepath")
@@ -176,8 +170,6 @@ extension DashboardView {
             .font(.title3.weight(.bold))
             .foregroundStyle(.primary)
     }
-
-    // MARK: - Derived Data
 
     var dashboardStats: DashboardStats {
         let bugs = bugViewModel.allBugs

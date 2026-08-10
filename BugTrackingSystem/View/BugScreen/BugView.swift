@@ -110,6 +110,7 @@ struct BugView : View {
         .sheet(isPresented:$isAddViewPresented) {
             AddBugView()
         }
+        .id(bugViewModel.idCounter)
     }
 
     private var filterChips: some View {
