@@ -13,6 +13,7 @@ class TeamViewModel {
     var allEmployees: [Employee] = []
     var selectedEmployees:[Employee] = []
     var teams:[Team] = []
+    var refreshToken: Int = 0
     var context: NSManagedObjectContext?
     
     init(context:NSManagedObjectContext = PersistenceController.shared.container.viewContext) {
@@ -27,6 +28,7 @@ class TeamViewModel {
             let allTeamsRequest = Team.fetchRequest()
             teams = []
             teams = try context.fetch(allTeamsRequest)
+            refreshToken += 1 // for UI update
         } catch {
             print("error fetching team")
         }
@@ -40,16 +42,21 @@ class TeamViewModel {
             let data = try context.fetch(allEmployeesRequest)
             allEmployees = [] // forcing ui to re-render
             allEmployees = Array(data)
+            refreshToken += 1 // for UI update
         } catch {
             print("All employee busy")
         }
     }
     
     func isTeamValid() -> Bool {
+        isTeamValid(employees: selectedEmployees)
+    }
+    
+    func isTeamValid(employees: [Employee]) -> Bool {
         var pMCount: Int = 0
         var devCount: Int = 0
         var qaCount: Int = 0
-        for employee in selectedEmployees {
+        for employee in employees {
             if employee.role == RoleEnum.projectManager.rawValue {
                 pMCount += 1
             } else if employee.role == RoleEnum.developer.rawValue{
@@ -59,6 +66,28 @@ class TeamViewModel {
             }
         }
         return pMCount == 1 && devCount >= 1 && qaCount >= 1
+    }
+    
+    func teamMembers(of team: Team) -> [Employee] {
+        (team.team_employee_relation?.allObjects as? [Employee]) ?? []
+    }
+    
+    func updateTeam(_ team: Team, teamName: String, members: [Employee]) {
+        guard let context = self.context else { return }
+        for employee in teamMembers(of: team) {
+            if !members.contains(where: { $0.employee_id == employee.employee_id }) {
+                employee.team_id = nil
+                employee.employee_team_relation = nil
+            }
+        }
+        for employee in members {
+            employee.team_id = team.team_id
+            employee.employee_team_relation = team
+        }
+        team.team_name = teamName
+        context.saveData()
+        fetchAllTeam()
+        fetchAllEmployee()
     }
     
     func createTeam(projectName: String, projectDesc: String, projectStartDate: Date, projectStatus: String, teamName: String,projectExpectedDate: Date, projectOsType: String) {

@@ -32,14 +32,17 @@ struct TeamView: View {
                 VStack{
                     List {
                         ForEach(filteredTeams, id: \.team_id) { team in
-                            teamRow(team)
-                                .listRowSeparator(.hidden)
-                                .listRowInsets(EdgeInsets(top: 6, leading: 12, bottom: 6, trailing: 12))
-                                .listRowBackground(Color.clear)
+                            NavigationLink(destination: TeamDetailView(team: team)) {
+                                teamRow(team)
+                            }
+                            .listRowSeparator(.hidden)
+                            .listRowInsets(EdgeInsets(top: 6, leading: 12, bottom: 6, trailing: 12))
+                            .listRowBackground(Color.clear)
                         }
                     }
                     .listStyle(.plain)
                     .scrollContentBackground(.hidden)
+                    .id(teamViewModel.refreshToken)
                     
                     Button(action:{SessionManager.shared.logOut()}){
                         Text("Log out")

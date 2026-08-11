@@ -56,9 +56,16 @@ struct SubView:View {
                 
                 NavigationStack {
                     BugView()
-                }.tag(1)
+                }.tag(2)
                     .tabItem{
                         Label("Bug",systemImage: "ladybug")
+                    }
+
+                NavigationStack {
+                    MyBugView()
+                }.tag(3)
+                    .tabItem{
+                        Label("My Bug",systemImage: "clipboard.fill")
                     }
             }
             .ignoresSafeArea()

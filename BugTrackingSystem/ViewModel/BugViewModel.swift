@@ -13,6 +13,14 @@ class BugViewModel {
     var isQaTester:Bool { SessionManager.shared.isQaTester }
     var isDev:Bool { SessionManager.shared.isDeveloper }
     var isProjectManager:Bool { SessionManager.shared.isProjectManager }
+
+    func canEditBug(_ bug: Bug) -> Bool {
+        if isProjectManager { return true }
+        guard isQaTester,
+              let myID = employee?.employee_id else { return false }
+        return bug.reporter_employee_id == myID ||
+               bug.bug_emaployee_relation?.employee_id == myID
+    }
     var developers: [Employee] {
         let all = (employee?.employee_team_relation?.team_employee_relation?.allObjects as? [Employee]) ?? []
         return all.filter { $0.role == RoleEnum.developer.rawValue }
@@ -127,23 +135,38 @@ class BugViewModel {
         fetchBugs()
     }
 
-    func allowedTransitions(from status: BugStatus) -> [BugStatus] {
+    func changePriority(_ bug: Bug, to priority: BugPriority) {
+        guard let context = self.context else { return }
+        bug.priority = priority.rawValue
+        context.saveData()
+        fetchBugs()
+    }
+
+    func allowedTransitions(for bug: Bug, from status: BugStatus) -> [BugStatus] {
+        let isAssignedDeveloper = isAssignedDeveloper(for: bug)
         switch status {
         case .open:
             return isProjectManager ? [.assigned] : []
         case .assigned:
-            return isDev ? [.inProgress] : []
+            return isAssignedDeveloper ? [.inProgress] : []
         case .inProgress:
-            return isDev ? [.readyForTesting] : []
+            return isAssignedDeveloper ? [.readyForTesting] : []
         case .readyForTesting:
             return isQaTester ? [.fixed, .reopened] : []
         case .fixed:
             return isQaTester ? [.closed, .reopened] : []
         case .reopened:
-            return isDev ? [.inProgress] : []
+            return isAssignedDeveloper ? [.inProgress] : []
         case .closed:
             return isProjectManager ? [.reopened] : []
         }
+    }
+
+    private func isAssignedDeveloper(for bug: Bug) -> Bool {
+        guard isDev,
+              let assignedID = bug.assigned_employee_id,
+              let employeeID = employee?.employee_id else { return false }
+        return assignedID == employeeID
     }
 
     func updateBugStatus(_ bug: Bug, to status: BugStatus) {

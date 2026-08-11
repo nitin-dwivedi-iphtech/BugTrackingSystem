@@ -35,7 +35,7 @@ struct BugDetailsView: View {
         .navigationTitle("Bug Details")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            if bugViewModel.isProjectManager {
+            if bugViewModel.canEditBug(bug) {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
                         showEditBug = true
@@ -188,6 +188,7 @@ struct BugDetailsView: View {
             if isExpanded {
                 statusWorkflowCard
                 if bugViewModel.isProjectManager {
+                    priorityCard
                     assigneeCard
                 }
                 descriptionCard
@@ -238,7 +239,7 @@ struct BugDetailsView: View {
     }
 
     private var statusWorkflowCard: some View {
-        let transitions = bugViewModel.allowedTransitions(from: currentStatus)
+        let transitions = bugViewModel.allowedTransitions(for: bug, from: currentStatus)
         return VStack(alignment: .leading, spacing: 14) {
             Label("Status Workflow", systemImage: "arrow.triangle.2.circlepath")
                 .font(.headline)
@@ -303,6 +304,50 @@ struct BugDetailsView: View {
                         }
                     }
                 }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color(.secondarySystemBackground))
+        )
+    }
+
+    private var priorityCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label("Priority", systemImage: "flag.fill")
+                .font(.headline)
+                .foregroundStyle(Color.appButtonGradient)
+
+            Text("Change the priority of this bug.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            HStack(spacing: 10) {
+                ForEach(BugPriority.allCases) { priority in
+                    Button {
+                        bugViewModel.changePriority(bug, to: priority)
+                    } label: {
+                        Text(priority.rawValue)
+                            .font(.caption.weight(bug.priority == priority.rawValue ? .bold : .semibold))
+                            .foregroundStyle(
+                                bug.priority == priority.rawValue
+                                    ? Color.white
+                                    : bugViewModel.priorityColor(priority.rawValue)
+                            )
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 7)
+                            .background(
+                                bug.priority == priority.rawValue
+                                    ? AnyShapeStyle(bugViewModel.priorityColor(priority.rawValue))
+                                    : AnyShapeStyle(bugViewModel.priorityColor(priority.rawValue).opacity(0.12)),
+                                in: Capsule()
+                            )
+                    }
+                    .buttonStyle(.plain)
+                }
+                Spacer(minLength: 0)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
