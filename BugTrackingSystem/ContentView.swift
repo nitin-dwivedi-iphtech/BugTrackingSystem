@@ -35,8 +35,16 @@ struct SubView:View {
                     .tabItem{
                         Label("Team",systemImage: "person.3.fill")
                     }
+
+                NavigationStack {
+                    ProjectView()
+                }.tag(1)
+                    .tabItem{
+                        Label("Project",systemImage: "hammer.fill")
+                    }
             }
             .environment(teamViewModel)
+            .environment(projectViewModel)
             .ignoresSafeArea()
         } else {
             TabView {
@@ -62,15 +70,23 @@ struct SubView:View {
                     }
 
                 NavigationStack {
-                    MyBugView()
+                    MyWorkView()
                 }.tag(3)
                     .tabItem{
                         Label("My Bug",systemImage: "clipboard.fill")
+                    }
+
+                NavigationStack {
+                    MembersView()
+                }.tag(4)
+                    .tabItem{
+                        Label("Members",systemImage: "person.3.fill")
                     }
             }
             .ignoresSafeArea()
             .environment(projectViewModel)
             .environment(bugViewModel)
+            .environment(teamViewModel)
         }
     }
 }

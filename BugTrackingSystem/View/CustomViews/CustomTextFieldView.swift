@@ -32,7 +32,6 @@ struct CustomTextFieldView: View {
             }
         }
         .padding()
-        .background(Color(.secondarySystemBackground))
         .cornerRadius(12)
     }
 }

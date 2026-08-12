@@ -11,10 +11,13 @@ import CoreData
 struct MyBugView: View {
     @Environment(BugViewModel.self) private var bugViewModel
     @State private var viewModel = MyBugViewModel()
+    var showsHeader: Bool = true
 
     var body: some View {
         VStack(spacing: 0) {
-            header
+            if showsHeader {
+                header
+            }
             CustomSearchView(query: $viewModel.searchQuery)
             bugList
         }
@@ -25,6 +28,7 @@ struct MyBugView: View {
 
     private var assignedBugs: [Bug] { viewModel.filteredAssignedBugs }
     private var reportedBugs: [Bug] { viewModel.filteredReportedBugs }
+    private var recentlyUpdatedBugs: [Bug] { viewModel.filteredRecentlyUpdatedBugs }
 
     private var header: some View {
         HStack {
@@ -34,8 +38,7 @@ struct MyBugView: View {
                     .foregroundStyle(.primary)
                 Text("\(viewModel.assignedCount) assigned • \(viewModel.reportedCount) reported")
                     .font(.subheadline)
-                    .foregroundStyle(.secondary)
-            }
+                    .foregroundStyle(.secondary)            }
             Spacer()
             ZStack {
                 Circle()
@@ -95,6 +98,29 @@ struct MyBugView: View {
                     icon: "person.crop.circle.badge.exclamationmark",
                     count: viewModel.reportedCount,
                     tint: .orange
+                )
+            }
+
+            Section {
+                if recentlyUpdatedBugs.isEmpty {
+                    emptyRow(message: "No recent updates on your bugs")
+                } else {
+                    ForEach(recentlyUpdatedBugs, id: \.bug_id) { bug in
+                        NavigationLink(destination: BugDetailsView(bug: bug)) {
+                            BugRow(bug: bug)
+                        }
+                        .listRowSeparator(.hidden)
+                        .listRowInsets(EdgeInsets(top: 6, leading: 12, bottom: 6, trailing: 12))
+                        .listRowBackground(Color.clear)
+                    }
+                }
+            } header: {
+                sectionHeader(
+                    title: "Recently Updated",
+                    subtitle: "Latest activity on your bugs",
+                    icon: "clock.arrow.circlepath",
+                    count: viewModel.recentlyUpdatedCount,
+                    tint: .purple
                 )
             }
         }

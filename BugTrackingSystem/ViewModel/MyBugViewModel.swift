@@ -12,6 +12,7 @@ import Observation
 class MyBugViewModel {
     var assignedBugs: [Bug] = []
     var reportedBugs: [Bug] = []
+    var recentlyUpdatedBugs: [Bug] = []
     var searchQuery: String = ""
     private var context: NSManagedObjectContext?
 
@@ -22,6 +23,7 @@ class MyBugViewModel {
 
     var assignedCount: Int { assignedBugs.count }
     var reportedCount: Int { reportedBugs.count }
+    var recentlyUpdatedCount: Int { recentlyUpdatedBugs.count }
 
     private var currentEmployeeID: String? {
         SessionManager.shared.employee?.employee_id
@@ -32,6 +34,7 @@ class MyBugViewModel {
               let employeeID = currentEmployeeID else {
             assignedBugs = []
             reportedBugs = []
+            recentlyUpdatedBugs = []
             return
         }
 
@@ -45,10 +48,14 @@ class MyBugViewModel {
                 $0.reporter_employee_id == employeeID ||
                 $0.bug_emaployee_relation?.employee_id == employeeID
             }
+            recentlyUpdatedBugs = allBugs
+                .filter { $0.reporter_employee_id == employeeID || $0.assigned_employee_id == employeeID }
+                .sorted { ($0.updated_date ?? .distantPast) > ($1.updated_date ?? .distantPast) }
         } catch {
             print("Failed to fetch my bugs: \(error)")
             assignedBugs = []
             reportedBugs = []
+            recentlyUpdatedBugs = []
         }
     }
 
@@ -58,6 +65,10 @@ class MyBugViewModel {
 
     var filteredReportedBugs: [Bug] {
         filterBugs(reportedBugs)
+    }
+
+    var filteredRecentlyUpdatedBugs: [Bug] {
+        filterBugs(recentlyUpdatedBugs)
     }
 
     private func filterBugs(_ bugs: [Bug]) -> [Bug] {

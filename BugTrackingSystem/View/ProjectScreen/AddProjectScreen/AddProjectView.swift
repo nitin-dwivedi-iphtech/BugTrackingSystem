@@ -9,7 +9,8 @@ import SwiftUI
 
 struct AddProjectView: View {
     @Environment(\.dismiss) private var dismiss
-    var onSave: (_ name: String, _ desc: String, _ startDate: Date, _ expectedDate: Date, _ status: ProjectStatus, _ osType: ProjectOsTypes) -> Void
+    var teams: [Team] = []
+    var onSave: (_ name: String, _ desc: String, _ startDate: Date, _ expectedDate: Date, _ status: ProjectStatus, _ osType: ProjectOsTypes, _ team: Team?) -> Void
 
     @State private var projectName: String = ""
     @State private var projectDescription: String = ""
@@ -17,6 +18,18 @@ struct AddProjectView: View {
     @State private var expectedDate:Date = Date()
     @State private var projectStatus:ProjectStatus = .active
     @State private var projectOsType:ProjectOsTypes = .mobile
+    @State private var selectedTeamID: String?
+
+    private var selectedTeam: Team? {
+        guard let selectedTeamID = selectedTeamID else { return teams.first }
+        return teams.first { $0.team_id == selectedTeamID }
+    }
+
+    private var isFormValid: Bool {
+        let nameValid = !projectName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        let teamValid = teams.isEmpty || selectedTeam != nil
+        return nameValid && teamValid
+    }
     
     var body: some View {
         VStack(alignment: .center, spacing: 12) {
@@ -35,6 +48,11 @@ struct AddProjectView: View {
         }
         .navigationBarBackButtonHidden(true)
         .padding(.bottom)
+        .onAppear {
+            if selectedTeamID == nil {
+                selectedTeamID = teams.first?.team_id
+            }
+        }
     }
     
     var Header: some View {
@@ -66,6 +84,10 @@ struct AddProjectView: View {
         VStack(spacing: 12) {
             typePicker
             
+            if !teams.isEmpty {
+                teamPicker
+            }
+            
             CustomTextFieldView(placeholder: "Project Name", text: $projectName, icon: "folder.fill", lineLimit: 1)
             CustomTextFieldView(placeholder: "Project brief description", text: $projectDescription, icon: "doc.text", lineLimit: 3)
             
@@ -76,6 +98,22 @@ struct AddProjectView: View {
             
         }
         .padding(.horizontal)
+    }
+
+    var teamPicker: some View {
+        HStack {
+            Image(systemName: "person.3.fill")
+                .foregroundStyle(Color.appButtonGradient)
+                .frame(width: 20)
+            Picker("Team", selection: $selectedTeamID) {
+                Text("Select Team").tag(nil as String?)
+                ForEach(teams, id: \.team_id) { team in
+                    Text(team.team_name ?? "Unnamed Team").tag(team.team_id)
+                }
+            }
+            .pickerStyle(.menu)
+        }
+        .padding(.vertical, 8)
     }
     
     var statusPicker: some View{
@@ -108,7 +146,7 @@ struct AddProjectView: View {
     
     var saveButton: some View {
         Button {
-            onSave(projectName, projectDescription, startDate, expectedDate, projectStatus, projectOsType)
+            onSave(projectName, projectDescription, startDate, expectedDate, projectStatus, projectOsType, selectedTeam)
             dismiss()
         } label: {
             Label("Save", systemImage: "square.and.arrow.down")
@@ -122,8 +160,8 @@ struct AddProjectView: View {
                 .shadow(color: Color("appPrimary").opacity(0.3), radius: 8, y: 4)
         }
         .padding(.horizontal)
-        .disabled(projectName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-        .opacity(projectName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0.5 : 1)
+        .disabled(!isFormValid)
+        .opacity(isFormValid ? 1 : 0.5)
     }
 }
 

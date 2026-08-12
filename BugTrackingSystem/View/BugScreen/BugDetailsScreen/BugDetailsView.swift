@@ -138,6 +138,10 @@ struct BugDetailsView: View {
                     keyValue(icon: "calendar", title: "Open Date", value: bug.open_date?.formatted(date: .abbreviated, time: .omitted) ?? "N/A")
                     keyValue(icon: "calendar.badge.exclamationmark", title: "Due Date", value: bug.due_date ?? "N/A")
                 }
+                GridRow {
+                    keyValue(icon: "clock.arrow.circlepath", title: "Updated", value: bug.updated_date?.formatted(date: .abbreviated, time: .omitted) ?? "N/A")
+                    keyValue(icon: "arrow.triangle.2.circlepath", title: "Status Changed", value: bug.status_updated_date?.formatted(date: .abbreviated, time: .omitted) ?? "N/A")
+                }
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)

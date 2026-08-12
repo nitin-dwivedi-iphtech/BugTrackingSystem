@@ -49,7 +49,7 @@ struct AddTeamView: View {
         }
         .sheet(isPresented: $showAddProject) {
             NavigationStack {
-                AddProjectView(onSave: { name, desc, startDate, expectedDate, status, projectOs in
+                AddProjectView(onSave: { name, desc, startDate, expectedDate, status, projectOs, _ in
                     projectName = name
                     projectDesc = desc
                     projectStartDate = startDate

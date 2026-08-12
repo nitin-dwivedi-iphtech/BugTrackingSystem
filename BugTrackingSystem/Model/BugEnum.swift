@@ -7,9 +7,9 @@
 
 
 enum BugEnvironment: String, CaseIterable, Identifiable {
-    case staging = "Staging"
-    case production = "Production"
-    case qa = "QA"
+    case ios = "iOS"
+    case android = "Android"
+    case web = "Web"
 
     var id: String { self.rawValue }
 }

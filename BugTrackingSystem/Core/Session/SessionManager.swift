@@ -131,5 +131,6 @@ class SessionManager{
     func logOut(){
         KeyChainHelper.delete(key: key)
         isLoggedIn = false
+        employee = nil
     }
 }

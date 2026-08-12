@@ -37,14 +37,15 @@ class BugViewModel {
     
     func fetchBugs() {
         idCounter += 1
-        guard let project = employee?.employee_team_relation?.team_project_relation?.allObjects.first as? Project,
-              let projectID = project.project_id else {
+        guard let projects = employee?.employee_team_relation?.team_project_relation?.allObjects as? [Project],
+              !projects.isEmpty else {
             allBugs = []
             return
         }
 
+        let projectIDs = projects.compactMap(\.project_id)
         let bugRequest = Bug.fetchRequest()
-        bugRequest.predicate = NSPredicate(format: "project_id == %@", projectID)
+        bugRequest.predicate = NSPredicate(format: "project_id IN %@", projectIDs)
         bugRequest.sortDescriptors = [NSSortDescriptor(key: "open_date", ascending: false)]
 
         do {
@@ -55,9 +56,19 @@ class BugViewModel {
         }
     }
     
-    func createBug(bugTitle: String, moduleName: String, bugDescription: String, stepsToReproduce: String, expectedResult: String, actualResult: String, environment: String, priority: String, severity: String, status: String, deviceType: String, osVersion: String, appVersion: String, dueDate: Date, screenshot: Data? = nil, assignedTo: String? = nil) {
-        guard let context = self.context,
-              let project = employee?.employee_team_relation?.team_project_relation?.allObjects.first as? Project else { return }
+    func createBug(bugTitle: String, moduleName: String, bugDescription: String, stepsToReproduce: String, expectedResult: String, actualResult: String, environment: String, priority: String, severity: String, status: String, deviceName: String, osVersion: String, appVersion: String, dueDate: Date, screenshot: Data? = nil, assignedTo: String? = nil, projectID: String? = nil) {
+        guard let context = self.context else { return }
+
+        let project: Project?
+        if let projectID = projectID {
+            let request = Project.fetchRequest()
+            request.predicate = NSPredicate(format: "project_id == %@", projectID)
+            request.fetchLimit = 1
+            project = try? context.fetch(request).first
+        } else {
+            project = employee?.employee_team_relation?.team_project_relation?.allObjects.first as? Project
+        }
+        guard let project = project else { return }
 
         let bug = Bug(context: context)
         bug.bug_id = UUID().uuidString
@@ -71,11 +82,12 @@ class BugViewModel {
         bug.priority = priority
         bug.severity = severity
         bug.status = status
-        bug.device_name = deviceType
+        bug.device_name = deviceName
         bug.os_version = osVersion
         bug.app_version = appVersion
         bug.due_date = dueDate.formatted(date: .abbreviated, time: .omitted)
         bug.open_date = Date()
+        bug.updated_date = Date()
         bug.project_id = project.project_id
         bug.bug_project_relation = project
         bug.reporter_employee_id = employee?.employee_id
@@ -87,7 +99,7 @@ class BugViewModel {
         fetchBugs()
     }
 
-    func updateBug(bug: Bug, bugTitle: String, moduleName: String, bugDescription: String, stepsToReproduce: String, expectedResult: String, actualResult: String, environment: String, priority: String, severity: String, status: String, deviceType: String, osVersion: String, appVersion: String, dueDate: Date, screenshot: Data?, assignedTo: String?) {
+    func updateBug(bug: Bug, bugTitle: String, moduleName: String, bugDescription: String, stepsToReproduce: String, expectedResult: String, actualResult: String, environment: String, priority: String, severity: String, status: String, deviceName: String, osVersion: String, appVersion: String, dueDate: Date, screenshot: Data?, assignedTo: String?) {
         guard let context = self.context else { return }
 
         bug.bug_details = bugTitle
@@ -100,12 +112,13 @@ class BugViewModel {
         bug.priority = priority
         bug.severity = severity
         bug.status = status
-        bug.device_name = deviceType
+        bug.device_name = deviceName
         bug.os_version = osVersion
         bug.app_version = appVersion
         bug.due_date = dueDate.formatted(date: .abbreviated, time: .omitted)
         bug.screenshot = screenshot?.base64EncodedString()
         bug.assigned_employee_id = assignedTo
+        bug.updated_date = Date()
 
         context.saveData()
         fetchBugs()
@@ -130,7 +143,9 @@ class BugViewModel {
         if developerID != nil,
            BugStatus(rawValue: bug.status ?? BugStatus.open.rawValue) == .open {
             bug.status = BugStatus.assigned.rawValue
+            bug.status_updated_date = Date()
         }
+        bug.updated_date = Date()
         context.saveData()
         fetchBugs()
     }
@@ -138,6 +153,7 @@ class BugViewModel {
     func changePriority(_ bug: Bug, to priority: BugPriority) {
         guard let context = self.context else { return }
         bug.priority = priority.rawValue
+        bug.updated_date = Date()
         context.saveData()
         fetchBugs()
     }
@@ -172,11 +188,13 @@ class BugViewModel {
     func updateBugStatus(_ bug: Bug, to status: BugStatus) {
         guard let context = self.context else { return }
         bug.status = status.rawValue
+        bug.status_updated_date = Date()
         if status == .closed {
             bug.close_date = Date()
         } else {
             bug.close_date = nil
         }
+        bug.updated_date = Date()
         context.saveData()
         fetchBugs()
     }
@@ -193,6 +211,7 @@ class BugViewModel {
         comment.timestamp = Date()
         comment.comment_bug_relation = bug
         comment.comment_employee_relation = employee
+        bug.updated_date = Date()
         context.saveData()
         fetchBugs()
     }
@@ -202,12 +221,14 @@ class BugViewModel {
               !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
         comment.comment_text = text
         comment.timestamp = Date()
+        comment.comment_bug_relation?.updated_date = Date()
         context.saveData()
         fetchBugs()
     }
 
     func deleteComment(_ comment: Comment) {
         guard let context = self.context else { return }
+        comment.comment_bug_relation?.updated_date = Date()
         context.delete(comment)
         context.saveData()
         fetchBugs()
@@ -252,6 +273,16 @@ class BugViewModel {
         case "High": return .orange
         case "Medium": return .blue
         case "Low": return .green
+        default: return .secondary
+        }
+    }
+
+    func severityColor(_ severity: String?) -> Color {
+        switch severity {
+        case BugSeverity.blocker.rawValue: return .red
+        case BugSeverity.major.rawValue: return .orange
+        case BugSeverity.minor.rawValue: return .blue
+        case BugSeverity.trivial.rawValue: return .gray
         default: return .secondary
         }
     }

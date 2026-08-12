@@ -21,7 +21,9 @@
         <attribute name="screenshot" optional="YES" attributeType="String"/>
         <attribute name="severity" optional="YES" attributeType="String"/>
         <attribute name="status" optional="YES" attributeType="String"/>
+        <attribute name="status_updated_date" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="step_to_reproduce" optional="YES" attributeType="String"/>
+        <attribute name="updated_date" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <relationship name="bug_comment_relation" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Comment" inverseName="comment_bug_relation" inverseEntity="Comment"/>
         <relationship name="bug_emaployee_relation" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Employee" inverseName="employee_bug_relation" inverseEntity="Employee"/>
         <relationship name="bug_project_relation" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Project" inverseName="project_bug_relation" inverseEntity="Project"/>
