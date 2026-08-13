@@ -45,7 +45,7 @@ struct AddBugView: View {
     }
 
     var body: some View {
-        VStack(spacing: 0) {
+        VStack(spacing: 10) {
             header
             subtitle
             ScrollView {
@@ -96,16 +96,16 @@ struct AddBugView: View {
             Color.clear.frame(width: 36, height: 36)
         }
         .padding(.horizontal)
-        .padding(.top, 8)
+        .padding(.top, 10)
     }
 
     private var subtitle: some View {
         Text("Report a bug with the details needed to reproduce and fix it")
             .font(.caption)
             .foregroundStyle(.secondary)
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(maxWidth: .infinity, alignment: .center)
             .padding(.horizontal)
-            .padding(.bottom, 8)
+            .padding(.vertical, 8)
     }
 
     private var bugInfoCard: some View {

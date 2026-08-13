@@ -43,10 +43,6 @@ struct TeamView: View {
                     .listStyle(.plain)
                     .scrollContentBackground(.hidden)
                     .id(teamViewModel.refreshToken)
-                    
-                    Button(action:{SessionManager.shared.logOut()}){
-                        Text("Log out")
-                    }
                 }
             }
         }
@@ -64,6 +60,15 @@ struct TeamView: View {
                 .font(.title)
                 .fontWeight(.semibold)
             Spacer()
+            NavigationLink {
+                SettingsView()
+            } label: {
+                Image(systemName: "gearshape.fill")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(.primary)
+                    .frame(width: 36, height: 36)
+                    .background(Color(.secondarySystemBackground), in: Circle())
+            }
             Image(systemName: "plus")
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundStyle(.white)

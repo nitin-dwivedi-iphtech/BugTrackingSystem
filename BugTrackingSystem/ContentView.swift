@@ -26,16 +26,17 @@ struct SubView:View {
     @State private var contentVewModel = ContentViewModel()
     @State private var teamViewModel = TeamViewModel()
     @State private var bugViewModel = BugViewModel()
+    @State private var selectedTab = 0
     var body: some View {
         if contentVewModel.isAdmin{
-            TabView{
+            TabView(selection: $selectedTab){
                 NavigationStack {
                     TeamView()
                 }.tag(0)
                     .tabItem{
                         Label("Team",systemImage: "person.3.fill")
                     }
-
+                
                 NavigationStack {
                     ProjectView()
                 }.tag(1)
@@ -47,14 +48,7 @@ struct SubView:View {
             .environment(projectViewModel)
             .ignoresSafeArea()
         } else {
-            TabView {
-                NavigationStack{
-                    DashboardView()
-                }.tag(0)
-                .tabItem{
-                    Label("Dashboard",systemImage: "square.grid.2x2.fill")
-                }
-                
+            TabView(selection: $selectedTab) {
                 NavigationStack {
                     ProjectView()
                 }.tag(1)
@@ -68,14 +62,21 @@ struct SubView:View {
                     .tabItem{
                         Label("Bug",systemImage: "ladybug")
                     }
-
+                
+                NavigationStack{
+                    DashboardView()
+                }.tag(0)
+                    .tabItem{
+                        Label("Dashboard",systemImage: "square.grid.2x2.fill")
+                    }
+                
                 NavigationStack {
                     MyWorkView()
                 }.tag(3)
                     .tabItem{
                         Label("My Bug",systemImage: "clipboard.fill")
                     }
-
+                
                 NavigationStack {
                     MembersView()
                 }.tag(4)

@@ -10,6 +10,40 @@ import Charts
 
 extension DashboardView {
     
+    var reportsEntry: some View {
+        NavigationLink(destination: ReportsView()) {
+            HStack(spacing: 14) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color("appPrimary").opacity(0.12))
+                        .frame(width: 48, height: 48)
+                    Image(systemName: "chart.bar.xaxis")
+                        .font(.title3)
+                        .foregroundStyle(Color("appPrimary"))
+                }
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Reports")
+                        .font(.headline)
+                        .foregroundStyle(.primary)
+                    Text("Analytics by status, priority, severity, project & month")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(2)
+                }
+                Spacer(minLength: 0)
+                Image(systemName: "chevron.right")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.secondary)
+            }
+            .padding()
+            .background(
+                RoundedRectangle(cornerRadius: 16)
+                    .fill(Color(.secondarySystemBackground))
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
     var overviewSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             sectionHeader("Bug Overview", icon: "chart.pie.fill")

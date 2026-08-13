@@ -11,11 +11,13 @@ import CoreData
 @main
 struct BugTrackingSystemApp: App {
     let persistenceController = PersistenceController.shared
+    @AppStorage("darkMode") private var darkMode = false
 
     var body: some Scene {
         WindowGroup {
             SplashView()
                 .environment(\.managedObjectContext, persistenceController.container.viewContext)
+                .preferredColorScheme(darkMode ? .dark : .light)
         }
     }
 }

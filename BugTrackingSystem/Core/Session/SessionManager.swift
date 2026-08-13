@@ -13,11 +13,16 @@ class SessionManager{
     var isLoggedIn: Bool = false
     var context:NSManagedObjectContext?
     var employee:Employee?
+    var profileUpdateToken: Int = 0
     private let key = "token"
     
     private init(){
         context = PersistenceController.shared.container.viewContext
         autoLogin()
+    }
+
+    func notifyProfileUpdated() {
+        profileUpdateToken += 1
     }
     
     var isAdmin:Bool {

@@ -14,6 +14,7 @@ struct DashboardView: View {
         ScrollView {
             VStack(spacing: 20) {
                 headerBanner
+                reportsEntry
                 overviewSection
                 statusSection
                 recentSection
@@ -43,10 +44,10 @@ struct DashboardView: View {
                     .background(.white.opacity(0.2), in: Capsule())
             }
             Spacer()
-            Button {
-                SessionManager.shared.logOut()
+            NavigationLink {
+                SettingsView()
             } label: {
-                Image(systemName: "rectangle.portrait.and.arrow.right")
+                Image(systemName: "gearshape.fill")
                     .font(.body.weight(.semibold))
                     .foregroundStyle(.white)
                     .frame(width: 40, height: 40)
@@ -65,11 +66,25 @@ struct DashboardView: View {
     }
 
     private var avatarView: some View {
-        Text(String(employeeName.prefix(1)).uppercased())
-            .font(.title3.weight(.bold))
-            .foregroundStyle(Color("appPrimary"))
-            .frame(width: 52, height: 52)
-            .background(Circle().fill(.white))
+        ZStack {
+            if let photo = SessionManager.shared.employee?.profile_photo,
+               let data = Data(base64Encoded: photo),
+               let image = UIImage(data: data) {
+                Image(uiImage: image)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: 52, height: 52)
+                    .clipShape(Circle())
+                    .overlay(Circle().strokeBorder(.white.opacity(0.3), lineWidth: 2))
+            } else {
+                Text(String(employeeName.prefix(1)).uppercased())
+                    .font(.title3.weight(.bold))
+                    .foregroundStyle(Color("appPrimary"))
+                    .frame(width: 52, height: 52)
+                    .background(Circle().fill(.white))
+            }
+        }
+        .id(SessionManager.shared.profileUpdateToken)
     }
 
     private var greeting: String {

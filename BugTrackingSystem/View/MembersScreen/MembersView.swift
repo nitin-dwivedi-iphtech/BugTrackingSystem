@@ -145,6 +145,7 @@ private struct MemberRowView: View {
                     .foregroundStyle(.white)
             }
         }
+        .id(SessionManager.shared.profileUpdateToken)
     }
 
     private var roleBadge: some View {

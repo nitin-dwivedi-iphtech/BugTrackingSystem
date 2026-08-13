@@ -27,6 +27,7 @@ struct EmployeeRowView : View {
                 }
             }
             .frame(width: 48, height: 48)
+            .id(SessionManager.shared.profileUpdateToken)
             
             VStack(alignment: .leading, spacing: 4) {
                 Text(employee.employee_name ?? "Unknown")
@@ -60,7 +61,3 @@ struct EmployeeRowView : View {
         )
     }
 }
-
-//#Preview {
-//    EmployeeRowView(employee: <#T##Employee#>, selectedEmployee: <#T##() -> Void#>, deSelectedEmployee: <#T##() -> Void#>)
-//}

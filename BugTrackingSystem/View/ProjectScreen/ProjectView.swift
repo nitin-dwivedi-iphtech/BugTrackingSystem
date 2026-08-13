@@ -104,6 +104,15 @@ struct ProjectView:View {
                 .fontWeight(.medium)
             Spacer()
             if isAdmin {
+                NavigationLink {
+                    SettingsView()
+                } label: {
+                    Image(systemName: "gearshape.fill")
+                        .font(.title3.weight(.semibold))
+                        .foregroundStyle(Color("appPrimary"))
+                        .frame(width: 34, height: 34)
+                        .background(Color(.secondarySystemBackground), in: Circle())
+                }
                 Button {
                     showAddProject = true
                 } label: {

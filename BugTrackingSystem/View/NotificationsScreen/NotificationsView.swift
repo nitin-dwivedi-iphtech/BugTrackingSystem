@@ -28,8 +28,6 @@ struct NotificationsView: View {
         .onAppear { viewModel.fetchNotifications() }
     }
 
-    // MARK: - Header
-
     private var header: some View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
@@ -73,8 +71,6 @@ struct NotificationsView: View {
         }
         .frame(maxHeight: .infinity)
     }
-
-    // MARK: - List
 
     private var notificationList: some View {
         List {
@@ -127,8 +123,6 @@ struct NotificationsView: View {
         .padding(.bottom, 4)
     }
 }
-
-// MARK: - Row
 
 private struct NotificationRow: View {
     var item: NotificationItem
