@@ -9,10 +9,15 @@ import SwiftUI
 import CoreData
 
 struct MyBugView: View {
+    
     @Environment(BugViewModel.self) private var bugViewModel
     @State private var viewModel = MyBugViewModel()
     var showsHeader: Bool = true
 
+    private var assignedBugs: [Bug] { viewModel.filteredAssignedBugs }
+    private var reportedBugs: [Bug] { viewModel.filteredReportedBugs }
+    private var recentlyUpdatedBugs: [Bug] { viewModel.filteredRecentlyUpdatedBugs }
+    
     var body: some View {
         VStack(spacing: 0) {
             if showsHeader {
@@ -24,11 +29,10 @@ struct MyBugView: View {
         .onAppear {
             viewModel.fetchMyBugs()
         }
+        .refreshable {
+            viewModel.fetchMyBugs()
+        }
     }
-
-    private var assignedBugs: [Bug] { viewModel.filteredAssignedBugs }
-    private var reportedBugs: [Bug] { viewModel.filteredReportedBugs }
-    private var recentlyUpdatedBugs: [Bug] { viewModel.filteredRecentlyUpdatedBugs }
 
     private var header: some View {
         HStack {
@@ -38,16 +42,9 @@ struct MyBugView: View {
                     .foregroundStyle(.primary)
                 Text("\(viewModel.assignedCount) assigned • \(viewModel.reportedCount) reported")
                     .font(.subheadline)
-                    .foregroundStyle(.secondary)            }
-            Spacer()
-            ZStack {
-                Circle()
-                    .fill(Color("appPrimary").opacity(0.12))
-                    .frame(width: 46, height: 46)
-                Image(systemName: "ladybug.fill")
-                    .font(.title3)
-                    .foregroundStyle(Color.appButtonGradient)
+                    .foregroundStyle(.secondary)
             }
+            Spacer()
         }
         .padding(.horizontal)
         .padding(.top, 6)

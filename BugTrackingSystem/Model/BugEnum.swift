@@ -16,9 +16,9 @@ enum BugEnvironment: String, CaseIterable, Identifiable {
 
 enum BugSeverity: String, CaseIterable, Identifiable {
     case blocker = "Blocker"
+    case critical = "Critical"
     case major = "Major"
     case minor = "Minor"
-    case trivial = "Trivial"
 
     var id: String { self.rawValue }
 }

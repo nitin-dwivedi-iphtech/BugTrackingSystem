@@ -9,7 +9,7 @@ import SwiftUI
 
 struct DashboardView: View {
     @Environment(BugViewModel.self) var bugViewModel
-
+    
     var body: some View {
         ScrollView {
             VStack(spacing: 20) {
@@ -22,10 +22,10 @@ struct DashboardView: View {
             .padding()
         }
         .id(bugViewModel.idCounter)
-            .navigationTitle("Dashboard")
+        .navigationTitle("Dashboard")
         .scrollIndicators(.hidden)
     }
-
+    
     private var headerBanner: some View {
         HStack(spacing: 14) {
             avatarView
@@ -64,7 +64,7 @@ struct DashboardView: View {
             in: RoundedRectangle(cornerRadius: 20)
         )
     }
-
+    
     private var avatarView: some View {
         ZStack {
             if let photo = SessionManager.shared.employee?.profile_photo,
@@ -86,7 +86,7 @@ struct DashboardView: View {
         }
         .id(SessionManager.shared.profileUpdateToken)
     }
-
+    
     private var greeting: String {
         switch Calendar.current.component(.hour, from: Date()) {
         case 5..<12: return "Good Morning"
@@ -94,11 +94,11 @@ struct DashboardView: View {
         default: return "Good Evening"
         }
     }
-
+    
     private var employeeName: String {
         SessionManager.shared.employee?.employee_name ?? "User"
     }
-
+    
     private var roleLabel: String {
         SessionManager.shared.employee?.role ?? ""
     }

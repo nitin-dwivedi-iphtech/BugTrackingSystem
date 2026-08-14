@@ -27,8 +27,10 @@ struct AddBugView: View {
     @State private var osVersion: String = ""
     @State private var appVersion: String = ""
     @State private var dueDate: Date = Date()
-    @State private var selectedPhotoItem: PhotosPickerItem?
-    @State private var screenshotData: Data?
+    @State private var attachmentDrafts: [BugAttachmentDraft] = []
+    @State private var photoItem: PhotosPickerItem?
+    @State private var videoItem: PhotosPickerItem?
+    @State private var isLogImporterPresented: Bool = false
     @State private var assignedDeveloperID: String = ""
     @State private var selectedProjectID: String? = nil
 
@@ -222,8 +224,42 @@ struct AddBugView: View {
     }
 
     private var attachmentCard: some View {
-        card(title: "Screenshot", icon: "photo") {
-            attachmentButton
+        card(title: "Attachments", icon: "paperclip") {
+            if !attachmentDrafts.isEmpty {
+                ForEach(attachmentDrafts) { draft in
+                    AttachmentRowView(
+                        fileName: draft.fileName,
+                        fileType: draft.fileType,
+                        data: draft.data
+                    ) {
+                        attachmentDrafts.removeAll { $0.id == draft.id }
+                    }
+                }
+            }
+            AddAttachmentButtons(
+                photoItem: $photoItem,
+                videoItem: $videoItem,
+                isLogImporterPresented: $isLogImporterPresented,
+                nameFor: { type in
+                    switch type {
+                    case .image: return "Screenshot \(attachmentDrafts.count + 1).jpg"
+                    case .video: return "Screen Recording \(attachmentDrafts.count + 1).mov"
+                    case .log: return "Log \(attachmentDrafts.count + 1).txt"
+                    }
+                },
+                onAdd: { type, data, fileName in
+                    attachmentDrafts.append(BugAttachmentDraft(
+                        fileName: fileName,
+                        fileType: type,
+                        data: data
+                    ))
+                }
+            )
+            if attachmentDrafts.isEmpty {
+                Text("Attach screenshots, screen recordings, or log files to help reproduce the bug.")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+            }
         }
     }
 
@@ -271,54 +307,6 @@ struct AddBugView: View {
         .opacity(isFormValid ? 1 : 0.5)
     }
 
-    private var attachmentButton: some View {
-        PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
-            HStack(spacing: 12) {
-                Image(systemName: screenshotData == nil ? "plus.circle.fill" : "photo.fill")
-                    .foregroundStyle(Color.appButtonGradient)
-                    .frame(width: 24)
-
-                Text(screenshotData == nil ? "Add Screenshot" : "1 attachment")
-                    .font(.body)
-                    .foregroundStyle(.secondary)
-                Spacer()
-
-                if let screenshotData, let image = UIImage(data: screenshotData) {
-                    Image(uiImage: image)
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: 36, height: 36)
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
-
-                    Button {
-                        self.screenshotData = nil
-                        selectedPhotoItem = nil
-                    } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .foregroundStyle(.red)
-                    }
-                } else {
-                    Text("No attachment")
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
-                }
-            }
-            .padding(12)
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color(.secondarySystemBackground))
-                    .strokeBorder(Color(.systemGray4), lineWidth: 1)
-            )
-        }
-        .onChange(of: selectedPhotoItem) { _, newItem in
-            Task {
-                if let data = try? await newItem?.loadTransferable(type: Data.self) {
-                    screenshotData = data
-                }
-            }
-        }
-    }
-
     private func saveBug() {
         bugViewModel.createBug(
             bugTitle: bugTitle,
@@ -335,9 +323,9 @@ struct AddBugView: View {
             osVersion: osVersion,
             appVersion: appVersion,
             dueDate: dueDate,
-            screenshot: screenshotData,
             assignedTo: assignedDeveloperID.isEmpty ? nil : assignedDeveloperID,
-            projectID: selectedProjectID)
+            projectID: selectedProjectID,
+            attachments: attachmentDrafts)
         dismiss()
     }
 }

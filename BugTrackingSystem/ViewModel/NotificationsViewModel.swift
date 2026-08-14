@@ -38,9 +38,6 @@ class NotificationsViewModel {
         }
 
         let allBugs = teamBugs(in: context)
-        let involvedBugs = allBugs.filter {
-            $0.reporter_employee_id == employeeID || $0.assigned_employee_id == employeeID
-        }
         var built: [NotificationItem] = []
 
         for bug in allBugs where bug.assigned_employee_id == employeeID {
@@ -53,14 +50,14 @@ class NotificationsViewModel {
             ))
         }
 
-        let myBugIDs = Array(involvedBugs.compactMap(\.bug_id))
-        if !myBugIDs.isEmpty {
+        let teamBugIDs = Array(allBugs.compactMap(\.bug_id))
+        if !teamBugIDs.isEmpty {
             let commentRequest = Comment.fetchRequest()
-            commentRequest.predicate = NSPredicate(format: "bug_id IN %@", myBugIDs)
+            commentRequest.predicate = NSPredicate(format: "bug_id IN %@", teamBugIDs)
             commentRequest.sortDescriptors = [NSSortDescriptor(key: "timestamp", ascending: false)]
             if let comments = try? context.fetch(commentRequest) {
                 for comment in comments where comment.employee_id != employeeID {
-                    guard let bug = involvedBugs.first(where: { $0.bug_id == comment.bug_id }) else { continue }
+                    guard let bug = allBugs.first(where: { $0.bug_id == comment.bug_id }) else { continue }
                     let name = comment.comment_employee_relation?.employee_name ?? "Someone"
                     built.append(NotificationItem(
                         id: UUID(),
@@ -73,7 +70,7 @@ class NotificationsViewModel {
             }
         }
 
-        for bug in involvedBugs
+        for bug in allBugs
             where bug.status != nil && bug.status != BugStatus.open.rawValue {
             built.append(NotificationItem(
                 id: UUID(),
@@ -84,7 +81,7 @@ class NotificationsViewModel {
             ))
         }
 
-        for bug in involvedBugs
+        for bug in allBugs
             where bug.priority == BugPriority.high.rawValue || bug.priority == BugPriority.critical.rawValue {
             built.append(NotificationItem(
                 id: UUID(),

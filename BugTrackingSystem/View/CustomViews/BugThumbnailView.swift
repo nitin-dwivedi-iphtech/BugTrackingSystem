@@ -14,9 +14,7 @@ struct BugThumbnailView: View {
 
     var body: some View {
         Group {
-            if let screenshotString = bug.screenshot,
-               let data = Data(base64Encoded: screenshotString),
-               let image = UIImage(data: data) {
+            if let image = firstImage {
                 Image(uiImage: image)
                     .resizable()
                     .scaledToFill()
@@ -39,6 +37,21 @@ struct BugThumbnailView: View {
                 .frame(width: size, height: size)
             }
         }
+    }
+
+    private var firstImage: UIImage? {
+        let attachments = (bug.bug_attachment_relation?.allObjects as? [Attachment]) ?? []
+        for attachment in attachments
+            where AttachmentFileType(rawValue: attachment.file_type ?? "") == .image {
+            if let data = attachment.data, let image = UIImage(data: data) {
+                return image
+            }
+        }
+        if let screenshotString = bug.screenshot,
+           let data = Data(base64Encoded: screenshotString) {
+            return UIImage(data: data)
+        }
+        return nil
     }
 }
 

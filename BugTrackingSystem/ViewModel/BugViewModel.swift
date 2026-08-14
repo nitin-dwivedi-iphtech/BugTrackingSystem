@@ -56,7 +56,7 @@ class BugViewModel {
         }
     }
     
-    func createBug(bugTitle: String, moduleName: String, bugDescription: String, stepsToReproduce: String, expectedResult: String, actualResult: String, environment: String, priority: String, severity: String, status: String, deviceName: String, osVersion: String, appVersion: String, dueDate: Date, screenshot: Data? = nil, assignedTo: String? = nil, projectID: String? = nil) {
+    func createBug(bugTitle: String, moduleName: String, bugDescription: String, stepsToReproduce: String, expectedResult: String, actualResult: String, environment: String, priority: String, severity: String, status: String, deviceName: String, osVersion: String, appVersion: String, dueDate: Date, screenshot: Data? = nil, assignedTo: String? = nil, projectID: String? = nil, attachments: [BugAttachmentDraft] = []) {
         guard let context = self.context else { return }
 
         let project: Project?
@@ -95,11 +95,22 @@ class BugViewModel {
         bug.bug_emaployee_relation = employee
         bug.screenshot = screenshot?.base64EncodedString()
 
+        for draft in attachments {
+            let attachment = Attachment(context: context)
+            attachment.attachment_id = UUID().uuidString
+            attachment.bug_id = bug.bug_id
+            attachment.file_name = draft.fileName
+            attachment.file_type = draft.fileType.rawValue
+            attachment.data = draft.data
+            attachment.timestamp = Date()
+            attachment.attachment_bug_relation = bug
+        }
+
         context.saveData()
         fetchBugs()
     }
 
-    func updateBug(bug: Bug, bugTitle: String, moduleName: String, bugDescription: String, stepsToReproduce: String, expectedResult: String, actualResult: String, environment: String, priority: String, severity: String, status: String, deviceName: String, osVersion: String, appVersion: String, dueDate: Date, screenshot: Data?, assignedTo: String?) {
+    func updateBug(bug: Bug, bugTitle: String, moduleName: String, bugDescription: String, stepsToReproduce: String, expectedResult: String, actualResult: String, environment: String, priority: String, severity: String, status: String, deviceName: String, osVersion: String, appVersion: String, dueDate: Date, screenshot: Data? = nil, assignedTo: String?, attachments: [BugAttachmentDraft] = []) {
         guard let context = self.context else { return }
 
         bug.bug_details = bugTitle
@@ -120,6 +131,45 @@ class BugViewModel {
         bug.assigned_employee_id = assignedTo
         bug.updated_date = Date()
 
+        for draft in attachments {
+            let attachment = Attachment(context: context)
+            attachment.attachment_id = UUID().uuidString
+            attachment.bug_id = bug.bug_id
+            attachment.file_name = draft.fileName
+            attachment.file_type = draft.fileType.rawValue
+            attachment.data = draft.data
+            attachment.timestamp = Date()
+            attachment.attachment_bug_relation = bug
+        }
+
+        context.saveData()
+        fetchBugs()
+    }
+
+    func attachments(for bug: Bug) -> [Attachment] {
+        let all = (bug.bug_attachment_relation?.allObjects as? [Attachment]) ?? []
+        return all.sorted { ($0.timestamp ?? .distantPast) > ($1.timestamp ?? .distantPast) }
+    }
+
+    func addAttachment(to bug: Bug, fileName: String, fileType: AttachmentFileType, data: Data) {
+        guard let context = self.context else { return }
+        let attachment = Attachment(context: context)
+        attachment.attachment_id = UUID().uuidString
+        attachment.bug_id = bug.bug_id
+        attachment.file_name = fileName
+        attachment.file_type = fileType.rawValue
+        attachment.data = data
+        attachment.timestamp = Date()
+        attachment.attachment_bug_relation = bug
+        bug.updated_date = Date()
+        context.saveData()
+        fetchBugs()
+    }
+
+    func removeAttachment(_ attachment: Attachment) {
+        guard let context = self.context else { return }
+        attachment.attachment_bug_relation?.updated_date = Date()
+        context.delete(attachment)
         context.saveData()
         fetchBugs()
     }
@@ -185,10 +235,14 @@ class BugViewModel {
         return assignedID == employeeID
     }
 
-    func updateBugStatus(_ bug: Bug, to status: BugStatus) {
+    func updateBugStatus(_ bug: Bug, to status: BugStatus, fixDetails: String? = nil) {
         guard let context = self.context else { return }
         bug.status = status.rawValue
         bug.status_updated_date = Date()
+        if let fixDetails,
+           !fixDetails.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            bug.fix_details = fixDetails
+        }
         if status == .closed {
             bug.close_date = Date()
         } else {
@@ -250,7 +304,9 @@ class BugViewModel {
             ($0.bug_details ?? "").localizedCaseInsensitiveContains(trimmed) ||
             ($0.bug_id ?? "").localizedCaseInsensitiveContains(trimmed) ||
             ($0.module_name ?? "").localizedCaseInsensitiveContains(trimmed) ||
-            ($0.status ?? "").localizedCaseInsensitiveContains(trimmed)
+            ($0.status ?? "").localizedCaseInsensitiveContains(trimmed) ||
+            developerName(for: $0).localizedCaseInsensitiveContains(trimmed) ||
+            ($0.bug_project_relation?.project_name ?? "").localizedCaseInsensitiveContains(trimmed)
         }
     }
 
@@ -280,9 +336,9 @@ class BugViewModel {
     func severityColor(_ severity: String?) -> Color {
         switch severity {
         case BugSeverity.blocker.rawValue: return .red
+        case BugSeverity.critical.rawValue: return .purple
         case BugSeverity.major.rawValue: return .orange
         case BugSeverity.minor.rawValue: return .blue
-        case BugSeverity.trivial.rawValue: return .gray
         default: return .secondary
         }
     }

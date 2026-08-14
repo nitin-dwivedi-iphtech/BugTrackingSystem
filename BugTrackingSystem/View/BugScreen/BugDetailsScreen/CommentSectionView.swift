@@ -66,7 +66,7 @@ struct CommentSectionView: View {
             Text("This cannot be undone.")
         }
     }
-
+    
     private var emptyState: some View {
         VStack(spacing: 12) {
             Image(systemName: "bubble.left.and.bubble.right")
@@ -81,7 +81,7 @@ struct CommentSectionView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
-
+    
     private var commentComposer: some View {
         HStack(alignment: .bottom, spacing: 10) {
             TextField("Add a comment…", text: $commentText, axis: .vertical)

@@ -15,6 +15,9 @@ struct BugDetailsView: View {
     @State private var showEditBug: Bool = false
     @State private var showComments: Bool = false
     @State private var isExpanded: Bool = false
+    @State private var pendingStatus: BugStatus?
+    @State private var fixDetailsInput: String = ""
+    @State private var showFixDetailsAlert: Bool = false
 
     init(bug: Bug) {
         _bug = State(initialValue: bug)
@@ -57,12 +60,36 @@ struct BugDetailsView: View {
             guard let refreshed = try? bugViewModel.context?.existingObject(with: bugObjectID) as? Bug else { return }
             bug = refreshed
         }
+        .alert("Fix Details", isPresented: $showFixDetailsAlert) {
+            TextField("Describe how this bug was fixed", text: $fixDetailsInput)
+            Button("Submit Fix") {
+                if let pendingStatus {
+                    bugViewModel.updateBugStatus(bug, to: pendingStatus, fixDetails: fixDetailsInput)
+                }
+                pendingStatus = nil
+            }
+            Button("Cancel", role: .cancel) {
+                pendingStatus = nil
+            }
+        } message: {
+            Text("Provide details about the fix before marking the bug as Fixed.")
+        }
     }
 
     @State private var selectedDeveloperID: String = ""
 
     private var currentStatus: BugStatus {
         BugStatus(rawValue: bug.status ?? "") ?? .open
+    }
+
+    private func handleTransition(to status: BugStatus) {
+        if status == .fixed {
+            pendingStatus = status
+            fixDetailsInput = bug.fix_details ?? ""
+            showFixDetailsAlert = true
+        } else {
+            bugViewModel.updateBugStatus(bug, to: status)
+        }
     }
 
     private var headerCard: some View {
@@ -198,7 +225,13 @@ struct BugDetailsView: View {
                 descriptionCard
                 stepsCard
                 resultsCard
+                if let fix = bug.fix_details, !fix.isEmpty {
+                    fixDetailsCard
+                }
                 screenshotCard
+                if !bugViewModel.attachments(for: bug).isEmpty {
+                    attachmentsCard
+                }
             }
         }
     }
@@ -274,7 +307,7 @@ struct BugDetailsView: View {
                     HStack(spacing: 10) {
                         ForEach(transitions) { status in
                             Button {
-                                bugViewModel.updateBugStatus(bug, to: status)
+                                handleTransition(to: status)
                             } label: {
                                 VStack(spacing: 5) {
                                     ZStack {
@@ -422,9 +455,16 @@ struct BugDetailsView: View {
         }
     }
 
+    private var fixDetailsCard: some View {
+        sectionCard(icon: "wrench.and.screwdriver.fill", title: "Fix Details") {
+            Text(bug.fix_details ?? "No fix details provided")
+        }
+    }
+
     private var screenshotCard: some View {
         Group {
-            if let screenshotString = bug.screenshot,
+            if bugViewModel.attachments(for: bug).isEmpty,
+               let screenshotString = bug.screenshot,
                let data = Data(base64Encoded: screenshotString),
                let image = UIImage(data: data) {
                 sectionCard(icon: "photo.fill", title: "Screenshot") {
@@ -435,6 +475,75 @@ struct BugDetailsView: View {
                 }
             }
         }
+    }
+
+    private var attachmentsCard: some View {
+        let items = bugViewModel.attachments(for: bug)
+        return VStack(alignment: .leading, spacing: 12) {
+            Label("Attachments", systemImage: "paperclip")
+                .font(.headline)
+                .foregroundStyle(Color.appButtonGradient)
+
+            ForEach(items, id: \.attachment_id) { attachment in
+                HStack(spacing: 12) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 10)
+                            .fill(attachmentType(attachment).tint.opacity(0.15))
+                            .frame(width: 48, height: 48)
+                        if attachmentType(attachment) == .image,
+                           let data = attachment.data,
+                           let image = UIImage(data: data) {
+                            Image(uiImage: image)
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: 48, height: 48)
+                                .clipShape(RoundedRectangle(cornerRadius: 10))
+                        } else {
+                            Image(systemName: attachmentType(attachment).icon)
+                                .font(.body.weight(.semibold))
+                                .foregroundStyle(attachmentType(attachment).tint)
+                        }
+                    }
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(attachment.file_name ?? "Attachment")
+                            .font(.body.weight(.medium))
+                            .foregroundStyle(.primary)
+                            .lineLimit(1)
+                        Text("\(attachmentType(attachment).rawValue) • \(formattedSize(attachment.data?.count ?? 0))")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    if let data = attachment.data {
+                        ShareLink(item: data, preview: SharePreview(attachment.file_name ?? "Attachment")) {
+                            Image(systemName: "square.and.arrow.up")
+                                .font(.body.weight(.semibold))
+                                .foregroundStyle(Color.appButtonGradient)
+                        }
+                    }
+                }
+                .padding(10)
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color(.tertiarySystemBackground))
+                        .strokeBorder(Color(.systemGray4), lineWidth: 1)
+                )
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color(.secondarySystemBackground))
+        )
+    }
+
+    private func attachmentType(_ attachment: Attachment) -> AttachmentFileType {
+        AttachmentFileType(rawValue: attachment.file_type ?? "") ?? .image
+    }
+
+    private func formattedSize(_ bytes: Int) -> String {
+        ByteCountFormatter.string(fromByteCount: Int64(bytes), countStyle: .file)
     }
 
     private func sectionCard(icon: String, title: String, @ViewBuilder content: () -> some View) -> some View {

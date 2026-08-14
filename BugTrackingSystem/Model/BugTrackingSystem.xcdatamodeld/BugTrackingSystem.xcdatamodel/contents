@@ -12,6 +12,7 @@
         <attribute name="due_date" optional="YES" attributeType="String"/>
         <attribute name="environment" optional="YES" attributeType="String"/>
         <attribute name="expected_result" optional="YES" attributeType="String"/>
+        <attribute name="fix_details" optional="YES" attributeType="String"/>
         <attribute name="module_name" optional="YES" attributeType="String"/>
         <attribute name="open_date" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="os_version" optional="YES" attributeType="String"/>
@@ -24,12 +25,27 @@
         <attribute name="status_updated_date" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <attribute name="step_to_reproduce" optional="YES" attributeType="String"/>
         <attribute name="updated_date" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <relationship name="bug_attachment_relation" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Attachment" inverseName="attachment_bug_relation" inverseEntity="Attachment"/>
         <relationship name="bug_comment_relation" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Comment" inverseName="comment_bug_relation" inverseEntity="Comment"/>
         <relationship name="bug_emaployee_relation" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Employee" inverseName="employee_bug_relation" inverseEntity="Employee"/>
         <relationship name="bug_project_relation" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Project" inverseName="project_bug_relation" inverseEntity="Project"/>
         <uniquenessConstraints>
             <uniquenessConstraint>
                 <constraint value="bug_id"/>
+            </uniquenessConstraint>
+        </uniquenessConstraints>
+    </entity>
+    <entity name="Attachment" representedClassName="Attachment" syncable="YES" codeGenerationType="class">
+        <attribute name="attachment_id" optional="YES" attributeType="String"/>
+        <attribute name="bug_id" optional="YES" attributeType="String"/>
+        <attribute name="data" optional="YES" attributeType="Binary"/>
+        <attribute name="file_name" optional="YES" attributeType="String"/>
+        <attribute name="file_type" optional="YES" attributeType="String"/>
+        <attribute name="timestamp" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <relationship name="attachment_bug_relation" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Bug" inverseName="bug_attachment_relation" inverseEntity="Bug"/>
+        <uniquenessConstraints>
+            <uniquenessConstraint>
+                <constraint value="attachment_id"/>
             </uniquenessConstraint>
         </uniquenessConstraints>
     </entity>

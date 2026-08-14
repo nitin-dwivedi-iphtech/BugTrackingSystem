@@ -48,8 +48,7 @@ class MyBugViewModel {
                 $0.reporter_employee_id == employeeID ||
                 $0.bug_emaployee_relation?.employee_id == employeeID
             }
-            recentlyUpdatedBugs = allBugs
-                .filter { $0.reporter_employee_id == employeeID || $0.assigned_employee_id == employeeID }
+        recentlyUpdatedBugs = teamBugs(in: context)
                 .sorted { ($0.updated_date ?? .distantPast) > ($1.updated_date ?? .distantPast) }
         } catch {
             print("Failed to fetch my bugs: \(error)")
@@ -57,6 +56,16 @@ class MyBugViewModel {
             reportedBugs = []
             recentlyUpdatedBugs = []
         }
+    }
+
+    private func teamBugs(in context: NSManagedObjectContext) -> [Bug] {
+        guard let employee = SessionManager.shared.employee,
+              let projects = employee.employee_team_relation?.team_project_relation?.allObjects as? [Project],
+              !projects.isEmpty else { return [] }
+        let projectIDs = projects.compactMap(\.project_id)
+        let request = Bug.fetchRequest()
+        request.predicate = NSPredicate(format: "project_id IN %@", projectIDs)
+        return (try? context.fetch(request)) ?? []
     }
 
     var filteredAssignedBugs: [Bug] {

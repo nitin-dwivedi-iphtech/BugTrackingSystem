@@ -28,8 +28,11 @@ struct BugEditView: View {
     @State private var osVersion: String = ""
     @State private var appVersion: String = ""
     @State private var dueDate: Date = Date()
-    @State private var selectedPhotoItem: PhotosPickerItem?
-    @State private var screenshotData: Data?
+    @State private var attachmentDrafts: [BugAttachmentDraft] = []
+    @State private var existingAttachments: [Attachment] = []
+    @State private var photoItem: PhotosPickerItem?
+    @State private var videoItem: PhotosPickerItem?
+    @State private var isLogImporterPresented: Bool = false
     @State private var assignedDeveloperID: String = ""
     
     var body: some View {
@@ -38,7 +41,7 @@ struct BugEditView: View {
             
             Text("Update the bug details and assign it to a developer")
                 .font(.caption)
-                .foregroundStyle(.black.opacity(0.6))
+                .foregroundStyle(.primary.opacity(0.6))
                 .padding(.horizontal)
             
             ScrollView {
@@ -67,7 +70,7 @@ struct BugEditView: View {
                     CustomTextFieldView(placeholder: "App Version", text: $appVersion, icon: "apps.iphone", lineLimit: 1)
                     
                     dueDatePicker
-                    attachmentButton
+                    attachmentsSection
                 }
                 .padding(.horizontal)
             }
@@ -114,8 +117,8 @@ struct BugEditView: View {
                     osVersion: osVersion,
                     appVersion: appVersion,
                     dueDate: dueDate,
-                    screenshot: screenshotData,
-                    assignedTo: assignedDeveloperID.isEmpty ? nil : assignedDeveloperID)
+                    assignedTo: assignedDeveloperID.isEmpty ? nil : assignedDeveloperID,
+                    attachments: attachmentDrafts)
                 dismiss()
             } label: {
                 
@@ -197,52 +200,56 @@ struct BugEditView: View {
         DatePicker("Due Date", selection: $dueDate, displayedComponents: .date)
     }
     
-    var attachmentButton: some View {
-        PhotosPicker(selection: $selectedPhotoItem, matching: .images) {
-            HStack(spacing: 12) {
-                Image(systemName: screenshotData == nil ? "plus.circle.fill" : "photo.fill")
-                    .foregroundStyle(Color.appButtonGradient)
-                    .frame(width: 24)
-                
-                Text(screenshotData == nil ? "Add Screenshot" : "1 attachment")
-                    .font(.body)
-                    .foregroundStyle(.secondary)
-                Spacer()
-                
-                if let screenshotData, let image = UIImage(data: screenshotData) {
-                    Image(uiImage: image)
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: 36, height: 36)
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
-                    
-                    Button {
-                        self.screenshotData = nil
-                        selectedPhotoItem = nil
-                    } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .foregroundStyle(.red)
+    var attachmentsSection: some View{
+        VStack(alignment: .leading, spacing: 10) {
+            if !existingAttachments.isEmpty {
+                ForEach(existingAttachments, id: \.attachment_id) { attachment in
+                    AttachmentRowView(
+                        fileName: attachment.file_name ?? "Attachment",
+                        fileType: attachmentType(attachment),
+                        data: attachment.data
+                    ) {
+                        bugViewModel.removeAttachment(attachment)
+                        existingAttachments = bugViewModel.attachments(for: bug)
                     }
-                } else {
-                    Text("No attachment")
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
                 }
             }
-            .padding(12)
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color(.systemBackground))
-                    .strokeBorder(Color(.systemGray4), lineWidth: 1)
+            if !attachmentDrafts.isEmpty {
+                ForEach(attachmentDrafts) { draft in
+                    AttachmentRowView(
+                        fileName: draft.fileName,
+                        fileType: draft.fileType,
+                        data: draft.data
+                    ) {
+                        attachmentDrafts.removeAll { $0.id == draft.id }
+                    }
+                }
+            }
+            AddAttachmentButtons(
+                photoItem: $photoItem,
+                videoItem: $videoItem,
+                isLogImporterPresented: $isLogImporterPresented,
+                nameFor: { type in
+                    let count = attachmentDrafts.count + existingAttachments.count
+                    switch type {
+                    case .image: return "Screenshot \(count + 1).jpg"
+                    case .video: return "Screen Recording \(count + 1).mov"
+                    case .log: return "Log \(count + 1).txt"
+                    }
+                },
+                onAdd: { type, data, fileName in
+                    attachmentDrafts.append(BugAttachmentDraft(
+                        fileName: fileName,
+                        fileType: type,
+                        data: data
+                    ))
+                }
             )
         }
-        .onChange(of: selectedPhotoItem) { _, newItem in
-            Task {
-                if let data = try? await newItem?.loadTransferable(type: Data.self) {
-                    screenshotData = data
-                }
-            }
-        }
+    }
+    
+    private func attachmentType(_ attachment: Attachment) -> AttachmentFileType {
+        AttachmentFileType(rawValue: attachment.file_type ?? "") ?? .image
     }
     
     private func prefill() {
@@ -259,20 +266,25 @@ struct BugEditView: View {
         deviceName = bug.device_name ?? ""
         osVersion = bug.os_version ?? ""
         appVersion = bug.app_version ?? ""
-        if let screenshotString = bug.screenshot, let data = Data(base64Encoded: screenshotString) {
-            screenshotData = data
-        }
-        assignedDeveloperID = bug.assigned_employee_id ?? ""
         if let dueString = bug.due_date,
            let parsed = try? Date(dueString, strategy: .dateTime.day().month(.abbreviated).year()) {
             dueDate = parsed
         }
+        assignedDeveloperID = bug.assigned_employee_id ?? ""
+        existingAttachments = bugViewModel.attachments(for: bug)
     }
 }
 
 #Preview {
-    NavigationStack {
-        BugEditView(bug: Bug())
-            .environment(BugViewModel())
+    let context = PersistenceController.preview.container.viewContext
+    let bug = Bug(context: context)
+    bug.bug_details = "Sample bug"
+    bug.module_name = "Login"
+    bug.due_date = Date().formatted(date: .abbreviated, time: .omitted)
+    // set any other fields you want to preview
+    
+    return NavigationStack {
+        BugEditView(bug: bug)
+            .environment(BugViewModel(context: context))
     }
 }

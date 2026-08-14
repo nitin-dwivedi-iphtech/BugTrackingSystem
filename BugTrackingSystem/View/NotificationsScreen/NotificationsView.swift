@@ -39,25 +39,6 @@ struct NotificationsView: View {
                     .foregroundStyle(.secondary)
             }
             Spacer()
-            ZStack {
-                Circle()
-                    .fill(Color("appPrimary").opacity(0.12))
-                    .frame(width: 46, height: 46)
-                Image(systemName: "bell.fill")
-                    .font(.title3)
-                    .foregroundStyle(Color.appButtonGradient)
-            }
-            .overlay(alignment: .topTrailing) {
-                if viewModel.totalCount > 0 {
-                    Text("\(viewModel.totalCount)")
-                        .font(.caption2.weight(.bold))
-                        .foregroundStyle(.white)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(Capsule().fill(.red))
-                        .offset(x: 4, y: -4)
-                }
-            }
         }
         .padding(.horizontal)
         .padding(.top, 6)
