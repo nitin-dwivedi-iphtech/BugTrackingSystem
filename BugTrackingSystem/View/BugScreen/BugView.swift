@@ -90,6 +90,9 @@ struct BugView : View {
                 filterChips
                     .transition(.move(edge: .top).combined(with: .opacity))
             }
+            if !recentBugs.isEmpty {
+                recentlyViewedSection
+            }
             if displayedBugs.isEmpty {
                 emptyState
             } else {
@@ -113,12 +116,40 @@ struct BugView : View {
         .id(bugViewModel.idCounter)
     }
 
+    private var recentBugs: [Bug] {
+        _ = bugViewModel.recentBugsToken
+        return bugViewModel.recentlyViewedBugs
+    }
+
+    private var recentlyViewedSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Recently Viewed")
+                .font(.headline)
+                .foregroundStyle(.primary)
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 12) {
+                    ForEach(recentBugs, id: \.bug_id) { bug in
+                        NavigationLink(destination: BugDetailsView(bug: bug)) {
+                            RecentlyViewedCard(bug: bug)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+        }
+        .padding(.vertical, 4)
+        .padding(.horizontal)
+    }
+
     private var filterChips: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 8) {
+                Image(systemName: "line.3.horizontal.decrease.circle.fill")
+                    .foregroundStyle(Color.appButtonGradient)
                 Text("Filters")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(.secondary)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.primary)
                 Spacer()
                 if hasActiveFilters {
                     Button("Clear all") {
@@ -138,6 +169,12 @@ struct BugView : View {
                 chipSection(title: "Project", options: projects, selection: $projectFilter)
             }
         }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color(.secondarySystemBackground))
+                .shadow(color: .black.opacity(0.06), radius: 8, y: 2)
+        )
         .padding(.horizontal)
         .padding(.bottom, 4)
     }
@@ -266,6 +303,32 @@ struct BugView : View {
         }
     }
 }
+
+private struct RecentlyViewedCard: View {
+    var bug: Bug
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            BugThumbnailView(bug: bug, size: 44)
+            Text(bug.bug_details ?? "Untitled Bug")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.primary)
+                .lineLimit(2)
+                .multilineTextAlignment(.leading)
+            Text(bug.bug_project_relation?.project_name ?? "No Project")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+        }
+        .frame(width: 150, alignment: .leading)
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 14)
+                .fill(Color(.secondarySystemBackground))
+        )
+    }
+}
+
 
 #Preview{
     BugView().environment(BugViewModel())

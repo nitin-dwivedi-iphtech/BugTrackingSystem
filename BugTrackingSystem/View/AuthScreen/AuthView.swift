@@ -40,7 +40,7 @@ struct AuthView: View{
                 
                 Spacer()
             }
-        }.ignoresSafeArea()
+        }.ignoresSafeArea(.container)
         .onChange(of: adminView) { _, isAdmin in
             viewModel.selectedRole = isAdmin ? RoleEnum.admin.rawValue : RoleEnum.projectManager.rawValue
         }

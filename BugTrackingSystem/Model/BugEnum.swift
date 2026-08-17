@@ -43,3 +43,16 @@ enum BugStatus: String, CaseIterable, Identifiable {
 
     var id: String { self.rawValue }
 }
+
+enum ActivityAction: String {
+    case created = "created"
+    case updated = "updated"
+    case statusChanged = "status_changed"
+    case assigned = "assigned"
+    case priorityChanged = "priority_changed"
+    case commentAdded = "comment_added"
+    case commentEdited = "comment_edited"
+    case commentDeleted = "comment_deleted"
+    case attachmentAdded = "attachment_added"
+    case attachmentRemoved = "attachment_removed"
+}

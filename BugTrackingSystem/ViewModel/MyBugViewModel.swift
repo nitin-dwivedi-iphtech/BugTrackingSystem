@@ -10,6 +10,7 @@ import Observation
 
 @Observable
 class MyBugViewModel {
+    var allBugs: [Bug] = []
     var assignedBugs: [Bug] = []
     var reportedBugs: [Bug] = []
     var recentlyUpdatedBugs: [Bug] = []
@@ -32,30 +33,32 @@ class MyBugViewModel {
     func fetchMyBugs() {
         guard let context = context,
               let employeeID = currentEmployeeID else {
+            allBugs = []
             assignedBugs = []
             reportedBugs = []
             recentlyUpdatedBugs = []
             return
         }
 
-        let request = Bug.fetchRequest()
-        request.sortDescriptors = [NSSortDescriptor(key: "open_date", ascending: false)]
-
-        do {
-            let allBugs = try context.fetch(request)
-            assignedBugs = allBugs.filter { $0.assigned_employee_id == employeeID }
-            reportedBugs = allBugs.filter {
-                $0.reporter_employee_id == employeeID ||
-                $0.bug_emaployee_relation?.employee_id == employeeID
-            }
-        recentlyUpdatedBugs = teamBugs(in: context)
-                .sorted { ($0.updated_date ?? .distantPast) > ($1.updated_date ?? .distantPast) }
-        } catch {
-            print("Failed to fetch my bugs: \(error)")
-            assignedBugs = []
-            reportedBugs = []
-            recentlyUpdatedBugs = []
+        let teamBugs = teamBugs(in: context)
+        allBugs = teamBugs.sorted { ($0.open_date ?? .distantPast) > ($1.open_date ?? .distantPast) }
+        assignedBugs = allBugs.filter { $0.assigned_employee_id == employeeID }
+        reportedBugs = allBugs.filter {
+            $0.reporter_employee_id == employeeID ||
+            $0.bug_emaployee_relation?.employee_id == employeeID
         }
+        recentlyUpdatedBugs = teamBugs
+            .sorted { ($0.updated_date ?? .distantPast) > ($1.updated_date ?? .distantPast) }
+    }
+
+    var favoriteBugs: [Bug] {
+        let ids = favoriteBugIDs
+        return filterBugs(allBugs.filter { $0.bug_id != nil && ids.contains($0.bug_id!) })
+    }
+
+    private var favoriteBugIDs: Set<String> {
+        let raw = SessionManager.shared.employee?.favourite_bug_id ?? ""
+        return Set(raw.split(separator: ",").map(String.init))
     }
 
     private func teamBugs(in context: NSManagedObjectContext) -> [Bug] {

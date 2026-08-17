@@ -1,5 +1,19 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="24902" systemVersion="25F84" minimumToolsVersion="Automatic" sourceLanguage="Swift" userDefinedModelVersionIdentifier="">
+    <entity name="ActivityLog" representedClassName="ActivityLog" syncable="YES" codeGenerationType="class">
+        <attribute name="action" optional="YES" attributeType="String"/>
+        <attribute name="activity_id" optional="YES" attributeType="String"/>
+        <attribute name="bug_id" optional="YES" attributeType="String"/>
+        <attribute name="employee_id" optional="YES" attributeType="String"/>
+        <attribute name="timestamp" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <relationship name="activity_bug_relation" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Bug" inverseName="bug_activity_relation" inverseEntity="Bug"/>
+        <relationship name="activity_employee_relation" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Employee" inverseName="employee_activity_relation" inverseEntity="Employee"/>
+        <uniquenessConstraints>
+            <uniquenessConstraint>
+                <constraint value="activity_id"/>
+            </uniquenessConstraint>
+        </uniquenessConstraints>
+    </entity>
     <entity name="Bug" representedClassName="Bug" syncable="YES" codeGenerationType="class">
         <attribute name="actual_result" optional="YES" attributeType="String"/>
         <attribute name="app_version" optional="YES" attributeType="String"/>
@@ -27,6 +41,7 @@
         <attribute name="updated_date" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
         <relationship name="bug_attachment_relation" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Attachment" inverseName="attachment_bug_relation" inverseEntity="Attachment"/>
         <relationship name="bug_comment_relation" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Comment" inverseName="comment_bug_relation" inverseEntity="Comment"/>
+        <relationship name="bug_activity_relation" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="ActivityLog" inverseName="activity_bug_relation" inverseEntity="ActivityLog"/>
         <relationship name="bug_emaployee_relation" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Employee" inverseName="employee_bug_relation" inverseEntity="Employee"/>
         <relationship name="bug_project_relation" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Project" inverseName="project_bug_relation" inverseEntity="Project"/>
         <uniquenessConstraints>
@@ -77,6 +92,7 @@
         <attribute name="team_id" optional="YES" attributeType="String"/>
         <relationship name="employee_bug_relation" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Bug" inverseName="bug_emaployee_relation" inverseEntity="Bug"/>
         <relationship name="employee_comment_relation" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Comment" inverseName="comment_employee_relation" inverseEntity="Comment"/>
+        <relationship name="employee_activity_relation" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="ActivityLog" inverseName="activity_employee_relation" inverseEntity="ActivityLog"/>
         <relationship name="employee_team_relation" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Team" inverseName="team_employee_relation" inverseEntity="Team"/>
         <uniquenessConstraints>
             <uniquenessConstraint>

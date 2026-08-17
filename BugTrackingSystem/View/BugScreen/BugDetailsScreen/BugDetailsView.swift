@@ -31,6 +31,7 @@ struct BugDetailsView: View {
                 keyInfoCard
                 knowMoreCard
                 commentsButton
+                activityTimelineCard
             }
             .padding()
         }
@@ -47,6 +48,17 @@ struct BugDetailsView: View {
                     }
                 }
             }
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button {
+                    bugViewModel.toggleFavorite(bug)
+                } label: {
+                    Image(systemName: bugViewModel.isFavorite(bug) ? "heart.fill" : "heart")
+                        .foregroundStyle(bugViewModel.isFavorite(bug) ? .red : Color("appPrimary"))
+                }
+            }
+        }
+        .onAppear {
+            bugViewModel.recordRecentlyViewed(bug)
         }
         .sheet(isPresented: $showEditBug) {
             BugEditView(bug: bug)
@@ -273,6 +285,60 @@ struct BugDetailsView: View {
 
     private var commentCount: Int {
         bugViewModel.comments(for: bug).count
+    }
+
+    private var activityTimelineCard: some View {
+        let logs = bugViewModel.activityLog(for: bug)
+        return VStack(alignment: .leading, spacing: 14) {
+            Label("Activity Timeline", systemImage: "clock.arrow.circlepath")
+                .font(.headline)
+                .foregroundStyle(Color.appButtonGradient)
+
+            if logs.isEmpty {
+                Text("No activity recorded yet.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            } else {
+                VStack(spacing: 0) {
+                    ForEach(Array(logs.enumerated()), id: \.element.activity_id) { index, log in
+                        HStack(alignment: .top, spacing: 12) {
+                            ZStack {
+                                Circle()
+                                    .fill(bugViewModel.activityTint(log.action).opacity(0.15))
+                                    .frame(width: 34, height: 34)
+                                Image(systemName: bugViewModel.activityIcon(log.action))
+                                    .font(.caption.weight(.semibold))
+                                    .foregroundStyle(bugViewModel.activityTint(log.action))
+                            }
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(bugViewModel.activityTitle(log.action))
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(.primary)
+                                if let name = log.activity_employee_relation?.employee_name {
+                                    Text(name)
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                            Spacer(minLength: 0)
+                            Text(log.timestamp?.formatted(date: .abbreviated, time: .shortened) ?? "")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                        if index < logs.count - 1 {
+                            Divider()
+                                .padding(.leading, 46)
+                        }
+                    }
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color(.secondarySystemBackground))
+        )
     }
 
     private var statusWorkflowCard: some View {

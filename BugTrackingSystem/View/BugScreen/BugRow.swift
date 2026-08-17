@@ -58,6 +58,16 @@ struct BugRow: View {
             RoundedRectangle(cornerRadius: 14)
                 .fill(Color(.secondarySystemBackground))
         )
+        .contextMenu {
+            Button {
+                bugViewModel.toggleFavorite(bug)
+            } label: {
+                Label(
+                    bugViewModel.isFavorite(bug) ? "Remove from Favorites" : "Add to Favorites",
+                    systemImage: bugViewModel.isFavorite(bug) ? "heart.slash" : "heart"
+                )
+            }
+        }
     }
 
     private var severityBadge: some View {

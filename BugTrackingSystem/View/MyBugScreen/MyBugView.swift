@@ -17,6 +17,7 @@ struct MyBugView: View {
     private var assignedBugs: [Bug] { viewModel.filteredAssignedBugs }
     private var reportedBugs: [Bug] { viewModel.filteredReportedBugs }
     private var recentlyUpdatedBugs: [Bug] { viewModel.filteredRecentlyUpdatedBugs }
+    private var favoriteBugs: [Bug] { viewModel.favoriteBugs }
     
     var body: some View {
         VStack(spacing: 0) {
@@ -30,6 +31,9 @@ struct MyBugView: View {
             viewModel.fetchMyBugs()
         }
         .refreshable {
+            viewModel.fetchMyBugs()
+        }
+        .onChange(of: bugViewModel.idCounter) { _, _ in
             viewModel.fetchMyBugs()
         }
     }
@@ -52,6 +56,29 @@ struct MyBugView: View {
 
     private var bugList: some View {
         List {
+            Section {
+                if favoriteBugs.isEmpty {
+                    emptyRow(message: "No favorite bugs yet. Tap the heart on a bug to save it here.")
+                } else {
+                    ForEach(favoriteBugs, id: \.bug_id) { bug in
+                        NavigationLink(destination: BugDetailsView(bug: bug)) {
+                            BugRow(bug: bug)
+                        }
+                        .listRowSeparator(.hidden)
+                        .listRowInsets(EdgeInsets(top: 6, leading: 12, bottom: 6, trailing: 12))
+                        .listRowBackground(Color.clear)
+                    }
+                }
+            } header: {
+                sectionHeader(
+                    title: "Favorites",
+                    subtitle: "Bugs you've hearted",
+                    icon: "heart.fill",
+                    count: favoriteBugs.count,
+                    tint: .red
+                )
+            }
+
             Section {
                 if assignedBugs.isEmpty {
                     emptyRow(message: "No bugs assigned to you")

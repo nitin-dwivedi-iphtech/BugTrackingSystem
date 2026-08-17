@@ -28,6 +28,7 @@ class BugViewModel {
     var allBugs:[Bug] = []
     var employee:Employee? { SessionManager.shared.employee }
     var idCounter = 0
+    var recentBugsToken: Int = 0
     
     var context:NSManagedObjectContext?
     init(context:NSManagedObjectContext = PersistenceController.shared.container.viewContext) {
@@ -107,6 +108,7 @@ class BugViewModel {
         }
 
         context.saveData()
+        logActivity(.created, on: bug)
         fetchBugs()
     }
 
@@ -143,6 +145,7 @@ class BugViewModel {
         }
 
         context.saveData()
+        logActivity(.updated, on: bug)
         fetchBugs()
     }
 
@@ -163,14 +166,17 @@ class BugViewModel {
         attachment.attachment_bug_relation = bug
         bug.updated_date = Date()
         context.saveData()
+        logActivity(.attachmentAdded, on: bug)
         fetchBugs()
     }
 
     func removeAttachment(_ attachment: Attachment) {
         guard let context = self.context else { return }
-        attachment.attachment_bug_relation?.updated_date = Date()
+        let bug = attachment.attachment_bug_relation
+        bug?.updated_date = Date()
         context.delete(attachment)
         context.saveData()
+        if let bug { logActivity(.attachmentRemoved, on: bug) }
         fetchBugs()
     }
 
@@ -197,6 +203,7 @@ class BugViewModel {
         }
         bug.updated_date = Date()
         context.saveData()
+        logActivity(.assigned, on: bug)
         fetchBugs()
     }
 
@@ -205,6 +212,7 @@ class BugViewModel {
         bug.priority = priority.rawValue
         bug.updated_date = Date()
         context.saveData()
+        logActivity(.priorityChanged, on: bug)
         fetchBugs()
     }
 
@@ -250,6 +258,7 @@ class BugViewModel {
         }
         bug.updated_date = Date()
         context.saveData()
+        logActivity(.statusChanged, on: bug)
         fetchBugs()
     }
 
@@ -267,6 +276,7 @@ class BugViewModel {
         comment.comment_employee_relation = employee
         bug.updated_date = Date()
         context.saveData()
+        logActivity(.commentAdded, on: bug)
         fetchBugs()
     }
 
@@ -277,14 +287,17 @@ class BugViewModel {
         comment.timestamp = Date()
         comment.comment_bug_relation?.updated_date = Date()
         context.saveData()
+        if let bug = comment.comment_bug_relation { logActivity(.commentEdited, on: bug) }
         fetchBugs()
     }
 
     func deleteComment(_ comment: Comment) {
         guard let context = self.context else { return }
-        comment.comment_bug_relation?.updated_date = Date()
+        let bug = comment.comment_bug_relation
+        bug?.updated_date = Date()
         context.delete(comment)
         context.saveData()
+        if let bug { logActivity(.commentDeleted, on: bug) }
         fetchBugs()
     }
 
@@ -340,6 +353,135 @@ class BugViewModel {
         case BugSeverity.major.rawValue: return .orange
         case BugSeverity.minor.rawValue: return .blue
         default: return .secondary
+        }
+    }
+
+    // MARK: - Favorites
+    private var favoriteBugIDs: Set<String> {
+        let raw = employee?.favourite_bug_id ?? ""
+        return Set(raw.split(separator: ",").map(String.init))
+    }
+
+    func isFavorite(_ bug: Bug) -> Bool {
+        guard let id = bug.bug_id else { return false }
+        return favoriteBugIDs.contains(id)
+    }
+
+    func toggleFavorite(_ bug: Bug) {
+        guard let context = self.context, let employee = employee, let id = bug.bug_id else { return }
+        var ids = favoriteBugIDs
+        if ids.contains(id) {
+            ids.remove(id)
+        } else {
+            ids.insert(id)
+        }
+        employee.favourite_bug_id = ids.sorted().joined(separator: ",")
+        context.saveData()
+        fetchBugs()
+    }
+
+    // MARK: - Recently Viewed
+    private struct RecentBugEntry: Codable {
+        let bugID: String
+        let timestamp: Date
+    }
+
+    private let recentBugsKey = "recentlyViewedBugs"
+    private let maxRecentBugs = 10
+
+    func recordRecentlyViewed(_ bug: Bug) {
+        guard let id = bug.bug_id else { return }
+        var entries = recentEntries
+        entries.removeAll { $0.bugID == id }
+        entries.insert(RecentBugEntry(bugID: id, timestamp: Date()), at: 0)
+        entries = Array(entries.prefix(maxRecentBugs))
+        if let data = try? JSONEncoder().encode(entries) {
+            UserDefaults.standard.set(data, forKey: recentBugsKey)
+        }
+        recentBugsToken += 1
+    }
+
+    var recentlyViewedBugs: [Bug] {
+        let entries = recentEntries
+        guard !entries.isEmpty, let context = context else { return [] }
+        let request = Bug.fetchRequest()
+        request.predicate = NSPredicate(format: "bug_id IN %@", entries.map(\.bugID))
+        let fetched = (try? context.fetch(request)) ?? []
+        var dict: [String: Bug] = [:]
+        for bug in fetched {
+            if let id = bug.bug_id { dict[id] = bug }
+        }
+        return entries.compactMap { dict[$0.bugID] }
+    }
+
+    private var recentEntries: [RecentBugEntry] {
+        guard let data = UserDefaults.standard.data(forKey: recentBugsKey),
+              let entries = try? JSONDecoder().decode([RecentBugEntry].self, from: data) else { return [] }
+        return entries
+    }
+
+    // MARK: - Activity Log
+    func logActivity(_ action: ActivityAction, on bug: Bug) {
+        guard let context = self.context else { return }
+        let log = ActivityLog(context: context)
+        log.activity_id = UUID().uuidString
+        log.bug_id = bug.bug_id
+        log.action = action.rawValue
+        log.timestamp = Date()
+        log.employee_id = employee?.employee_id
+        log.activity_bug_relation = bug
+        log.activity_employee_relation = employee
+        context.saveData()
+    }
+
+    func activityLog(for bug: Bug) -> [ActivityLog] {
+        let all = (bug.bug_activity_relation?.allObjects as? [ActivityLog]) ?? []
+        return all.sorted { ($0.timestamp ?? .distantPast) > ($1.timestamp ?? .distantPast) }
+    }
+
+    func activityTitle(_ action: String?) -> String {
+        guard let action = action, let a = ActivityAction(rawValue: action) else { return "Updated" }
+        switch a {
+        case .created: return "Bug created"
+        case .updated: return "Details updated"
+        case .statusChanged: return "Status changed"
+        case .assigned: return "Bug assigned"
+        case .priorityChanged: return "Priority changed"
+        case .commentAdded: return "Comment added"
+        case .commentEdited: return "Comment edited"
+        case .commentDeleted: return "Comment deleted"
+        case .attachmentAdded: return "Attachment added"
+        case .attachmentRemoved: return "Attachment removed"
+        }
+    }
+
+    func activityIcon(_ action: String?) -> String {
+        guard let action = action, let a = ActivityAction(rawValue: action) else { return "pencil" }
+        switch a {
+        case .created: return "ladybug.fill"
+        case .updated: return "pencil"
+        case .statusChanged: return "arrow.triangle.2.circlepath"
+        case .assigned: return "person.fill.badge.plus"
+        case .priorityChanged: return "flag.fill"
+        case .commentAdded: return "bubble.left.fill"
+        case .commentEdited: return "bubble.left.and.bubble.right.fill"
+        case .commentDeleted: return "trash.fill"
+        case .attachmentAdded: return "paperclip"
+        case .attachmentRemoved: return "paperclip.badge.minus"
+        }
+    }
+
+    func activityTint(_ action: String?) -> Color {
+        guard let action = action, let a = ActivityAction(rawValue: action) else { return .gray }
+        switch a {
+        case .created: return .blue
+        case .updated: return .teal
+        case .statusChanged: return .orange
+        case .assigned: return .indigo
+        case .priorityChanged: return .red
+        case .commentAdded, .commentEdited: return .green
+        case .commentDeleted: return .gray
+        case .attachmentAdded, .attachmentRemoved: return .purple
         }
     }
 }
