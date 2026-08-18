@@ -22,11 +22,12 @@ A bug tracking application built with **SwiftUI** and **Core Data** for iOS. Use
 - **Dashboard** — greeting banner with avatar, bug overview stats, status distribution chart, and a list of recently reported bugs (non-admin)
 - **Reports** — analytics with five report types (Status, Priority, Severity, Project, Monthly) rendered as bar and donut charts; summary stat cards
 - **Projects** — list with search; admin can add (with a Team picker) and delete (with confirmation, cascades bugs + team and unassigns members); team members shown in the project detail
-- **Bugs** — create/edit/report with platform (iOS/Android/Web), free-text device name, OS/app versions, severity/priority/status, due date, screenshot and file attachments; filterable (status/priority/severity/project), sortable and searchable list showing project, module, assigned developer, severity badge and status
-- **Bug Details** — rich detail screen with a role-gated status workflow, priority/assignee controls (PM), description/steps/results, fix details, screenshot and attachment previews with share support
+- **Bugs** — create/edit/report with platform (iOS/Android/Web), free-text device name, OS/app versions, severity/priority/status, due date, screenshot and file attachments; filterable (status/priority/severity/project), sortable and searchable list showing project, module, assigned developer, severity badge and status; horizontally scrollable **Recently Viewed** cards for bugs you've opened
+- **Bug Details** — rich detail screen with a role-gated status workflow, priority/assignee controls (PM), description/steps/results, fix details, screenshot and attachment previews with share support, and an **Activity Timeline** recording every create/update/assign/priority/comment/attachment event
 - **Comments** — add, edit, and delete comments per bug (only your own comments are editable)
 - **Attachments** — attach images, videos, or log files while creating/editing a bug; thumbnails and share links in details
-- **My Bug / Notifications** — segmented tab with assigned/reported/recently-updated bugs and a notifications feed (assignments, status updates, comments, priority changes)
+- **My Bug / Notifications** — segmented tab with **Favorites** (bugs you've hearted), assigned/reported/recently-updated bugs and a notifications feed (assignments, status updates, comments, priority changes)
+- **Favorites** — heart a bug from its row (long-press context menu) or from the details screen to pin it in the **Favorites** section of **My Bugs**
 - **Team Members** — role-filtered, searchable member list (name/email/designation)
 - **Teams** — admin creates a team (exactly 1 PM, ≥1 Developer, ≥1 QA Tester) with its first project and members; edit/add/remove members
 - **Settings** — profile with photo picker, dark mode toggle, about section (app name/version/build/minimum iOS), and logout
@@ -34,7 +35,7 @@ A bug tracking application built with **SwiftUI** and **Core Data** for iOS. Use
 ## Tech Stack
 
 - **SwiftUI** — declarative UI
-- **Core Data** — local persistence (Employee, Team, Project, Bug, Comment, Attachment entities)
+- **Core Data** — local persistence (Employee, Team, Project, Bug, Comment, Attachment, ActivityLog entities)
 - **Swift Charts** — status distribution and analytics charts
 - **Security / Keychain** — secure session storage
 - **Swift Observation** (`@Observable`) — reactive state (ViewModels)
@@ -139,7 +140,7 @@ The **Admin** account is seeded automatically on first launch:
 - `ContentView` checks `SessionManager.shared.isLoggedIn`:
   - **Not logged in** → `AuthView` (Login / Sign Up)
   - **Logged in as Admin** → TabView with **Team** and **Project** tabs
-  - **Logged in as PM / Developer / QA** → TabView with **Dashboard, Project, Bug, My Bug, Members** tabs
+  - **Logged in as PM / Developer / QA** → TabView with **Project, Bug, Dashboard, My Bug, Members** tabs
 - Regular users sign up with non-admin roles; the Admin account is created via `Persistence.createNewAdmin()` and logs in only.
 
 ### Module behavior
